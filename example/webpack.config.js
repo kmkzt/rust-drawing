@@ -14,7 +14,7 @@ module.exports = {
       template: 'index.html'
     }),
     new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, '../')
+      crateDirectory: path.resolve(__dirname, '..'),
       // Check https://rustwasm.github.io/wasm-pack/book/commands/build.html for
       // the available set of arguments.
       //
@@ -31,7 +31,7 @@ module.exports = {
       // ],
 
       // The same as the `--out-dir` option for `wasm-pack`
-      //   outDir: 'pkg'
+      outDir: path.resolve(__dirname, 'pkg')
 
       // The same as the `--out-name` option for `wasm-pack`
       // outName: "index",
