@@ -4,17 +4,17 @@ const webpack = require('webpack')
 const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin')
 
 module.exports = {
-  entry: './index.js',
+  entry: './example/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js'
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: 'index.html'
+      template: 'example/index.html'
     }),
     new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, '..'),
+      crateDirectory: path.resolve(__dirname, '.'),
       // Check https://rustwasm.github.io/wasm-pack/book/commands/build.html for
       // the available set of arguments.
       //
