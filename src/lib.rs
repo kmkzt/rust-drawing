@@ -1,5 +1,5 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -7,7 +7,6 @@ use wasm_bindgen::JsCast;
 // https://github.com/bodoni/svg
 use svg::Document;
 use svg::node::element::path::Data;
-use svg::node::element::path::Parameters;
 use svg::node::element::Path;
 use svg::node::element::SVG;
 
@@ -58,22 +57,19 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     // let context = Rc::new(context);
 
     let pressed = Rc::new(Cell::new(false));
-    let mut line = Vec::new();
+    let line = Rc::new(RefCell::new(Vec::new()));
     {
         let pressed = pressed.clone();
+        let line = line.clone();
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             // context.begin_path();
             // context.move_to(event.offset_x() as f64, event.offset_y() as f64);
 
-            &line.push(Line {
+            line.borrow_mut().push(Line {
                 x: event.offset_x() as f32,
                 y: event.offset_y() as f32
             });
-
-            for l in &line {
-                log(&format!("x: {}, y: {}", l.x, l.y));
-            }
             pressed.set(true);
 
 
@@ -85,12 +81,18 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     }
     {
         // let context = context.clone();
+        let line = line.clone();
         let pressed = pressed.clone();
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             if pressed.get() {
                 let test_log = format!("mousemove: x -> {}, y-> {}", event.offset_x() as f64, event.offset_y() as f64);
                 render_element.set_inner_html(&test_log);
+
+                line.borrow_mut().push(Line {
+                    x: event.offset_x() as f32,
+                    y: event.offset_y() as f32
+                });
                 // context.line_to(event.offset_x() as f64, event.offset_y() as f64);
                 // context.stroke();
                 // context.begin_path();
@@ -131,6 +133,9 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
 
 
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+            for l in line.borrow().iter() {
+                log(&format!("x: {}, y: {}", l.x, l.y));
+            }
             pressed.set(false);
             // context.line_to(event.offset_x() as f64, event.offset_y() as f64);
             // context.stroke();
