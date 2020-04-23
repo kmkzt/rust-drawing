@@ -4,12 +4,6 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-// https://github.com/bodoni/svg
-use svg::Document;
-use svg::node::element::path::Data;
-use svg::node::element::Path;
-use svg::node::element::SVG;
-
 // refference: https://rustwasm.github.io/wasm-bindgen/examples/console-log.html
 #[wasm_bindgen]
 extern "C" {
@@ -42,7 +36,9 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     let target_element = document
         .get_element_by_id(element_id)
         .unwrap()
-        .dyn_into::<web_sys::HtmlElement>()?;
+        .dyn_into::<web_sys::Element>()?;
+
+
     // let canvas = document
     //     .get_element_by_id(element_id)
     //     .unwrap()
@@ -107,40 +103,20 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let pressed = pressed.clone();
         let render_element = target_element.clone();
 
-        fn render_svg(x: f32, y: f32) -> String {
-            let renderer = SvgRenderer::new();
-
-           let data = Data::new()
-                .move_to((10, 10))
-                .line_by((0, 50))
-                .line_by((x, y))
-                .line_by((0, -50))
-                .close();
-
-            let path = Path::new()
-                .set("fill", "none")
-                .set("stroke", "black")
-                .set("stroke-width", 3)
-                .set("d", data);
-
-            let render_svg = renderer
-                .svg
-                .set("viewBox", (0, 0, 70, 70))
-                .add(path);
-
-            render_svg.to_string()
-        }
-
-
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            for l in line.borrow().iter() {
-                log(&format!("x: {}, y: {}", l.x, l.y));
+            let mut path_d = "".to_string();
+            for (i, li) in line.borrow().iter().enumerate() {
+                match i {
+                    0 => path_d.push_str(&format!("M{} {}", li.x, li.y)),
+                    _ => path_d.push_str(&format!(" L {} {}", li.x, li.y)),
+                }
             }
             pressed.set(false);
             // context.line_to(event.offset_x() as f64, event.offset_y() as f64);
             // context.stroke();
             log("mouseup");
-            render_element.set_inner_html(&render_svg(event.offset_x() as f32, event.offset_y() as f32));
+
+            render_element.set_inner_html(&format!("<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"{}\" /></svg>", &path_d.to_string()));
         }) as Box<dyn FnMut(_)>);
         target_element.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
         closure.forget();
@@ -149,32 +125,3 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     Ok(())
 }
 
-
-#[wasm_bindgen]
-#[derive(Debug, Clone)]
-pub struct SvgRenderer {
-    svg: SVG,
-    write: Data
-}
-
-#[wasm_bindgen]
-impl SvgRenderer {
-    pub fn new() -> Self {
-        SvgRenderer {
-            svg: Document::new(),
-            write: Data::new()
-        }
-    }
-    pub fn render(&self) -> String {
-        self.svg.to_string()
-    }
-}
-
-// impl SvgRenderer {
-//     pub fn write(&self) -> &Data {
-//         &self.write
-//     }
-//     pub fn svg(&self) -> &SVG {
-//         &self.svg
-//     }
-// }
