@@ -38,7 +38,9 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         .unwrap()
         .dyn_into::<web_sys::Element>()?;
 
-
+    // TODO: to size automatically
+    let el_width = 640;
+    let el_height = 480;
     // let canvas = document
     //     .get_element_by_id(element_id)
     //     .unwrap()
@@ -116,7 +118,7 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
             // context.stroke();
             log("mouseup");
 
-            render_element.set_inner_html(&format!("<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"{}\" /></svg>", &path_d.to_string()));
+            render_element.set_inner_html(&format!("<svg width=\"{}\" height=\"{}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"{}\" /></svg>",el_width, el_height, &path_d.to_string()));
         }) as Box<dyn FnMut(_)>);
         target_element.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
         closure.forget();
@@ -124,4 +126,3 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
 
     Ok(())
 }
-
