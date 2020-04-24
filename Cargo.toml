@@ -10,7 +10,6 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-draw = "0.3.0"
 js-sys = "0.3.37"
 wasm-bindgen = "0.2.60"
 
