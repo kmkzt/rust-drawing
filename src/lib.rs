@@ -1,6 +1,7 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
+use std::ops::{Deref, DerefMut};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -29,6 +30,45 @@ struct Point {
     x: f32,
     y: f32
 }
+
+fn create_path(line: Vec<Point>) -> String {
+    let mut path_d = "".to_string();
+    for (i, li) in line.iter().enumerate() {
+        match i {
+            0 => path_d.push_str(&format!("M{} {}", li.x, li.y)),
+            _ => path_d.push_str(&format!(" L {} {}", li.x, li.y)),
+        }
+    }
+
+    path_d
+}
+
+#[test]
+fn test_create_path() {
+    assert_eq!(create_path(vec![Point { x: 0.0, y: 0.0 }, Point { x: 1.0, y: 1.0 }]), "M0 0 L 1 1");
+}
+
+#[derive(Clone, Debug)]
+struct SvgPath {
+    d: Vec<Point>
+}
+impl SvgPath {
+    fn new() -> Self {
+        SvgPath {
+            d: Vec::new()
+        }
+    }
+
+    fn add_point(&mut self, point: Point) {
+        self.d.push(point);
+    }
+
+    fn to_string(&self) -> String {
+        create_path( self.d.to_vec())
+    }
+}
+
+
 #[wasm_bindgen]
 pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     let document = web_sys::window().unwrap().document().unwrap();
@@ -43,13 +83,13 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     let el_height = 480;
 
     let pressed = Rc::new(Cell::new(false));
-    let line = Rc::new(RefCell::new(Vec::new()));
+    let svg_path = Rc::new(RefCell::new(SvgPath::new()));
     {
+        let svg_path = svg_path.clone();
         let pressed = pressed.clone();
-        let line = line.clone();
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            line.borrow_mut().push(Point {
+            svg_path.borrow_mut().add_point(Point {
                 x: event.offset_x() as f32,
                 y: event.offset_y() as f32
             });
@@ -57,28 +97,26 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
 
             log(&format!("mousedown: x -> {}, y-> {}", event.offset_x() as f64, event.offset_y() as f64));
 
-            let path_d = create_path(line.borrow().to_vec());
-            let svg = svg_string(el_width, el_height, path_d);
+            let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
             render_element.set_inner_html(&svg);
         }) as Box<dyn FnMut(_)>);
         target_element.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
     {
-        let line = line.clone();
+        let svg_path = svg_path.clone();
         let pressed = pressed.clone();
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             if pressed.get() {
                 log(&format!("mousemove: x -> {}, y-> {}", event.offset_x() as f64, event.offset_y() as f64));
 
-                line.borrow_mut().push(Point {
+                svg_path.borrow_mut().add_point(Point {
                     x: event.offset_x() as f32,
                     y: event.offset_y() as f32
                 });
 
-                let path_d = create_path(line.borrow().to_vec());
-                let svg = svg_string(el_width, el_height, path_d);
+                let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
                 render_element.set_inner_html(&svg);
             }
         }) as Box<dyn FnMut(_)>);
@@ -86,14 +124,13 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         closure.forget();
     }
     {
+        let svg_path = svg_path.clone();
         let pressed = pressed.clone();
         let render_element = target_element.clone();
-
         let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
             pressed.set(false);
             log("mouseup");
-            let path_d = create_path(line.borrow().to_vec());
-            let svg = svg_string(el_width, el_height, path_d);
+            let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
             render_element.set_inner_html(&svg);
         }) as Box<dyn FnMut(_)>);
         target_element.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
@@ -103,17 +140,7 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     Ok(())
 }
 
-fn create_path(line: Vec<Point>) -> String {
-    let mut path_d = "".to_string();
-    for (i, li) in line.iter().enumerate() {
-        match i {
-            0 => path_d.push_str(&format!("M{} {}", li.x, li.y)),
-            _ => path_d.push_str(&format!(" L {} {}", li.x, li.y)),
-        }
-    }
 
-    path_d
-}
 
 fn svg_string(w: u32, h: u32, path: String ) -> String {
     format!("<svg width=\"{}\" height=\"{}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"{}\" /></svg>",w, h, path)
