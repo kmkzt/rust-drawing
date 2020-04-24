@@ -48,6 +48,7 @@ fn test_create_path() {
     assert_eq!(create_path(vec![Point { x: 0.0, y: 0.0 }, Point { x: 1.0, y: 1.0 }]), "M0 0 L 1 1");
 }
 
+// TODO: add fill, stroke, storke-width
 #[derive(Clone, Debug)]
 struct SvgPath {
     d: Vec<Point>
@@ -64,11 +65,46 @@ impl SvgPath {
     }
 
     fn to_string(&self) -> String {
-        create_path( self.d.to_vec())
+        format!("<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />", create_path(self.d.to_vec()))
     }
 }
 
+#[derive(Clone, Debug)]
+struct SvgDrawing {
+    width: u32,
+    height: u32,
+    paths: Vec<SvgPath>
+}
 
+impl SvgDrawing {
+    fn new(self) -> Self {
+        SvgDrawing {
+            ..self
+        }
+    }
+
+    fn add_path(&mut self, path: &SvgPath) {
+        self.paths.push(path.clone());
+    }
+
+    fn to_string(&self) -> String {
+        let mut path_el = "".to_string();
+        for p in self.paths.iter() {
+            path_el.push_str(&p.to_string());
+        }
+        format!("<svg width=\"{}\" height=\"{}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">{}</svg>",self.width, self.height, path_el)
+    }
+}
+
+impl Default for SvgDrawing {
+    fn default() -> Self {
+        SvgDrawing {
+            width: 640,
+            height: 480,
+            paths: Vec::new()
+        }
+    }
+}
 #[wasm_bindgen]
 pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
     let document = web_sys::window().unwrap().document().unwrap();
@@ -84,7 +120,9 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
 
     let pressed = Rc::new(Cell::new(false));
     let svg_path = Rc::new(RefCell::new(SvgPath::new()));
+    let drawing = Rc::new(RefCell::new(SvgDrawing::default()));
     {
+        let drawing = drawing.clone();
         let svg_path = svg_path.clone();
         let pressed = pressed.clone();
         let render_element = target_element.clone();
@@ -97,13 +135,13 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
 
             log(&format!("mousedown: x -> {}, y-> {}", event.offset_x() as f64, event.offset_y() as f64));
 
-            let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
-            render_element.set_inner_html(&svg);
+            render_element.set_inner_html(&drawing.borrow().to_string());
         }) as Box<dyn FnMut(_)>);
         target_element.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
     {
+        let drawing = drawing.clone();
         let svg_path = svg_path.clone();
         let pressed = pressed.clone();
         let render_element = target_element.clone();
@@ -116,23 +154,24 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
                     y: event.offset_y() as f32
                 });
 
-                let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
-                render_element.set_inner_html(&svg);
+                render_element.set_inner_html(&drawing.borrow().to_string());
             }
         }) as Box<dyn FnMut(_)>);
         target_element.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
     {
-        let svg_path = svg_path.clone();
+        let drawing = drawing.clone();
         let pressed = pressed.clone();
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
             pressed.set(false);
             log("mouseup");
-            let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
-            render_element.set_inner_html(&svg);
+            // let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
+            drawing.borrow_mut().add_path(&svg_path.borrow());
+            render_element.set_inner_html(&drawing.borrow().to_string());
         }) as Box<dyn FnMut(_)>);
+
         target_element.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
@@ -141,7 +180,3 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
 }
 
 
-
-fn svg_string(w: u32, h: u32, path: String ) -> String {
-    format!("<svg width=\"{}\" height=\"{}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"{}\" /></svg>",w, h, path)
-}
