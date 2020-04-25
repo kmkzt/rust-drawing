@@ -1,7 +1,7 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
 use std::cell::{Cell, RefCell};
-use std::rc::Rc;
 use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -24,11 +24,10 @@ extern "C" {
     fn log_many(a: &str, b: &str);
 }
 
-
 #[derive(Copy, Clone, Debug)]
 struct Point {
     x: f32,
-    y: f32
+    y: f32,
 }
 
 fn create_path(line: Vec<Point>) -> String {
@@ -45,19 +44,24 @@ fn create_path(line: Vec<Point>) -> String {
 
 #[test]
 fn test_create_path() {
-    assert_eq!(create_path(vec![Point { x: 0.0, y: 0.0 }, Point { x: 1.0, y: 1.0 }]), "M0 0 L 1 1");
+    assert_eq!(
+        create_path(vec![Point { x: 0.0, y: 0.0 }, Point { x: 1.0, y: 1.0 }]),
+        "M0 0 L 1 1"
+    );
 }
 
 // TODO: add fill, stroke, storke-width
 #[derive(Clone, Debug)]
 struct SvgPath {
-    d: Vec<Point>
+    d: Vec<Point>,
 }
 impl SvgPath {
     fn new() -> Self {
-        SvgPath {
-            d: Vec::new()
-        }
+        SvgPath { d: Vec::new() }
+    }
+
+    fn clear_point(&mut self) {
+        self.d = Vec::new();
     }
 
     fn add_point(&mut self, point: Point) {
@@ -65,7 +69,10 @@ impl SvgPath {
     }
 
     fn to_string(&self) -> String {
-        format!("<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />", create_path(self.d.to_vec()))
+        format!(
+            "<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />",
+            create_path(self.d.to_vec())
+        )
     }
 }
 
@@ -73,18 +80,16 @@ impl SvgPath {
 struct SvgDrawing {
     width: u32,
     height: u32,
-    paths: Vec<SvgPath>
+    paths: Vec<SvgPath>,
 }
 
 impl SvgDrawing {
     fn new(self) -> Self {
-        SvgDrawing {
-            ..self
-        }
+        SvgDrawing { ..self }
     }
 
-    fn add_path(&mut self, path: &SvgPath) {
-        self.paths.push(path.clone());
+    fn add_path(&mut self, path: SvgPath) {
+        self.paths.push(path);
     }
 
     fn to_string(&self) -> String {
@@ -101,7 +106,7 @@ impl Default for SvgDrawing {
         SvgDrawing {
             width: 640,
             height: 480,
-            paths: Vec::new()
+            paths: Vec::new(),
         }
     }
 }
@@ -114,12 +119,9 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         .unwrap()
         .dyn_into::<web_sys::Element>()?;
 
-    // TODO: to size automatically
-    let el_width = 640;
-    let el_height = 480;
-
     let pressed = Rc::new(Cell::new(false));
     let svg_path = Rc::new(RefCell::new(SvgPath::new()));
+    // TODO: to size automatically
     let drawing = Rc::new(RefCell::new(SvgDrawing::default()));
     {
         let drawing = drawing.clone();
@@ -129,15 +131,20 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             svg_path.borrow_mut().add_point(Point {
                 x: event.offset_x() as f32,
-                y: event.offset_y() as f32
+                y: event.offset_y() as f32,
             });
             pressed.set(true);
 
-            log(&format!("mousedown: x -> {}, y-> {}", event.offset_x() as f64, event.offset_y() as f64));
+            log(&format!(
+                "mousedown: x -> {}, y-> {}",
+                event.offset_x() as f64,
+                event.offset_y() as f64
+            ));
 
             render_element.set_inner_html(&drawing.borrow().to_string());
         }) as Box<dyn FnMut(_)>);
-        target_element.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
+        target_element
+            .add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
     {
@@ -147,17 +154,22 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             if pressed.get() {
-                log(&format!("mousemove: x -> {}, y-> {}", event.offset_x() as f64, event.offset_y() as f64));
+                log(&format!(
+                    "mousemove: x -> {}, y-> {}",
+                    event.offset_x() as f64,
+                    event.offset_y() as f64
+                ));
 
                 svg_path.borrow_mut().add_point(Point {
                     x: event.offset_x() as f32,
-                    y: event.offset_y() as f32
+                    y: event.offset_y() as f32,
                 });
 
                 render_element.set_inner_html(&drawing.borrow().to_string());
             }
         }) as Box<dyn FnMut(_)>);
-        target_element.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
+        target_element
+            .add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
     {
@@ -167,16 +179,15 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
             pressed.set(false);
             log("mouseup");
-            // let svg = svg_string(el_width, el_height, svg_path.borrow().to_string());
-            drawing.borrow_mut().add_path(&svg_path.borrow());
+            drawing.borrow_mut().add_path(svg_path.borrow().clone());
             render_element.set_inner_html(&drawing.borrow().to_string());
+            svg_path.borrow_mut().clear_point();
         }) as Box<dyn FnMut(_)>);
 
-        target_element.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
+        target_element
+            .add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
 
     Ok(())
 }
-
-
