@@ -1,20 +1,55 @@
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const webpack = require("webpack");
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const webpack = require('webpack')
+const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin')
 
+const isDev = process.env.NODE_ENV === 'development'
+
+const exclude = [/node_modules/, /pkg/]
+const eslintLoader = {
+  loader: 'eslint-loader',
+  options: {
+    fix: isDev,
+    failOnWarning: !isDev,
+  },
+}
 module.exports = {
-  entry: "./example/index.js",
+  entry: './example/index.ts',
   output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "index.js",
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'index.js',
+  },
+  module: {
+    rules: [
+      {
+        enforce: 'pre',
+        test: /\.jsx?$/,
+        exclude,
+        use: [eslintLoader],
+      },
+      {
+        enforce: 'pre',
+        test: /\.tsx?$/,
+        exclude,
+        use: [
+          {
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true,
+            },
+          },
+          eslintLoader,
+        ],
+      },
+      { test: /\.[tj]sx?$/, exclude, use: 'babel-loader' },
+    ],
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "example/index.html",
+      template: 'example/index.html',
     }),
     new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, "."),
+      crateDirectory: path.resolve(__dirname, '.'),
       // Check https://rustwasm.github.io/wasm-pack/book/commands/build.html for
       // the available set of arguments.
       //
@@ -26,10 +61,10 @@ module.exports = {
 
       // Optional array of absolute paths to directories, changes to which
       // will trigger the build.
-      watchDirectories: [path.resolve(__dirname, "src")],
+      watchDirectories: [path.resolve(__dirname, 'src')],
 
       // The same as the `--out-dir` option for `wasm-pack`
-      outDir: path.resolve(__dirname, "pkg"),
+      outDir: path.resolve(__dirname, 'pkg'),
 
       // The same as the `--out-name` option for `wasm-pack`
       // outName: "index",
@@ -52,9 +87,9 @@ module.exports = {
     // Have this example work in Edge which doesn't ship `TextEncoder` or
     // `TextDecoder` at this time.
     new webpack.ProvidePlugin({
-      TextDecoder: ["text-encoding", "TextDecoder"],
-      TextEncoder: ["text-encoding", "TextEncoder"],
+      TextDecoder: ['text-encoding', 'TextDecoder'],
+      TextEncoder: ['text-encoding', 'TextEncoder'],
     }),
   ],
-  mode: "development",
-};
+  mode: 'development',
+}
