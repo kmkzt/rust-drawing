@@ -1,6 +1,5 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
 use std::cell::{Cell, RefCell};
-use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -24,18 +23,40 @@ extern "C" {
     fn log_many(a: &str, b: &str);
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+#[derive(Copy, Clone, Debug)]
+enum PointCommand {
+    Move,  // M x y
+    Line,  // L x y
+    Cubic, // C x1 y1, x2 y2, x y
+    // ShortCutCubic, // S x2 y2, x y
+    // Quadratic, // Q x1 y1, x y
+    // TogatherQuadratic, // T x y
+    Close, // Z x y
+}
+
 #[derive(Copy, Clone, Debug)]
 struct Point {
+    command: PointCommand,
     x: f32,
     y: f32,
 }
 
 fn create_path(line: Vec<Point>) -> String {
     let mut path_d = "".to_string();
-    for (i, li) in line.iter().enumerate() {
-        match i {
-            0 => path_d.push_str(&format!("M{} {}", li.x, li.y)),
-            _ => path_d.push_str(&format!(" L {} {}", li.x, li.y)),
+    for (i, po) in line.iter().enumerate() {
+        if i != 0 {
+            path_d.push_str(&format!(" "));
+        }
+
+        match po.command {
+            PointCommand::Move => path_d.push_str(&format!("M {} {}", po.x, po.y)),
+            PointCommand::Cubic => {
+                // TODO: Cubic
+                path_d.push_str(&format!("L {} {}", po.x, po.y));
+            },
+            PointCommand::Close => path_d.push_str(&format!("Z {} {}", po.x, po.y)),
+            _ => path_d.push_str(&format!("L {} {}", po.x, po.y)),
         }
     }
 
@@ -45,8 +66,24 @@ fn create_path(line: Vec<Point>) -> String {
 #[test]
 fn test_create_path() {
     assert_eq!(
-        create_path(vec![Point { x: 0.0, y: 0.0 }, Point { x: 1.0, y: 1.0 }]),
-        "M0 0 L 1 1"
+        create_path(vec![
+            Point {
+                command: PointCommand::Move,
+                x: 0.0,
+                y: 0.0
+            },
+            Point {
+                command: PointCommand::Line,
+                x: 1.0,
+                y: 1.0
+            },
+            Point {
+                command: PointCommand::Close,
+                x: -1.0,
+                y: -1.0
+            }
+        ]),
+        "M 0 0 L 1 1 Z -1 -1"
     );
 }
 
@@ -60,7 +97,7 @@ impl SvgPath {
         SvgPath { d: Vec::new() }
     }
 
-    fn clear_point(&mut self) {
+    fn clear(&mut self) {
         self.d = Vec::new();
     }
 
@@ -76,6 +113,7 @@ impl SvgPath {
     }
 }
 
+#[wasm_bindgen]
 #[derive(Clone, Debug)]
 struct SvgDrawing {
     width: u32,
@@ -130,6 +168,7 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             svg_path.borrow_mut().add_point(Point {
+                command: PointCommand::Move,
                 x: event.offset_x() as f32,
                 y: event.offset_y() as f32,
             });
@@ -161,6 +200,7 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
                 ));
 
                 svg_path.borrow_mut().add_point(Point {
+                    command: PointCommand::Cubic,
                     x: event.offset_x() as f32,
                     y: event.offset_y() as f32,
                 });
@@ -176,12 +216,17 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let drawing = drawing.clone();
         let pressed = pressed.clone();
         let render_element = target_element.clone();
-        let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
+        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             pressed.set(false);
             log("mouseup");
+            svg_path.borrow_mut().add_point(Point {
+                command: PointCommand::Line,
+                x: event.offset_x() as f32,
+                y: event.offset_y() as f32,
+            });
             drawing.borrow_mut().add_path(svg_path.borrow().clone());
             render_element.set_inner_html(&drawing.borrow().to_string());
-            svg_path.borrow_mut().clear_point();
+            svg_path.borrow_mut().clear();
         }) as Box<dyn FnMut(_)>);
 
         target_element
