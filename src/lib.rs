@@ -42,6 +42,30 @@ struct Point {
     y: f32,
 }
 
+struct Vector {
+    value: f32,
+    angle: f32,
+}
+
+fn create_vecor(prev: (f32, f32), next: (f32, f32)) -> Vector {
+    let vx = next.0 - prev.0;
+    let vy = next.1 - prev.1;
+
+    return Vector {
+        value: (vx.powf(2.0) + vy.powf(2.0)).sqrt(),
+        angle: vy.atan2(vx),
+    };
+}
+const SMOOTH_RATIO: f32 = 0.2;
+fn create_control_point(prev: (f32, f32), curr: (f32, f32), next: (f32, f32)) -> (f32, f32) {
+    let vector = create_vecor(prev, next);
+    let smooth_value = vector.value * SMOOTH_RATIO;
+
+    (
+        curr.0 + vector.angle.cos() * smooth_value,
+        curr.1 + vector.angle.sin() * smooth_value,
+    )
+}
 fn create_path(line: Vec<Point>) -> String {
     let mut path_d = "".to_string();
     for (i, po) in line.iter().enumerate() {
@@ -52,9 +76,20 @@ fn create_path(line: Vec<Point>) -> String {
         match po.command {
             PointCommand::Move => path_d.push_str(&format!("M {} {}", po.x, po.y)),
             PointCommand::Cubic => {
-                // TODO: Cubic
-                path_d.push_str(&format!("L {} {}", po.x, po.y));
-            },
+                if i < 2 || i + 1 > line.len() {
+                    path_d.push_str(&format!("L {} {}", po.x, po.y))
+                } else {
+                    let p1 = line[i - 1];
+                    let p2 = line[i - 2];
+                    let n = line[i + 1];
+                    let cl = create_control_point((p2.x, p2.y), (p1.x, p1.y), (po.x, po.y));
+                    let cr = create_control_point((p1.x, p1.y), (po.x, po.y), (n.x, n.y));
+                    path_d.push_str(&format!(
+                        "C {} {} {} {} {} {}",
+                        cl.0, cl.1, cr.0, cr.1, po.x, po.y
+                    ));
+                }
+            }
             PointCommand::Close => path_d.push_str(&format!("Z {} {}", po.x, po.y)),
             _ => path_d.push_str(&format!("L {} {}", po.x, po.y)),
         }
