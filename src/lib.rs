@@ -7,25 +7,14 @@ use wasm_bindgen::JsCast;
 // refference: https://rustwasm.github.io/wasm-bindgen/examples/console-log.html
 #[wasm_bindgen]
 extern "C" {
-    // Use `js_namespace` here to bind `console.log(..)` instead of just
-    // `log(..)`
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
-
-    // The `console.log` is quite polymorphic, so we can bind it with multiple
-    // signatures. Note that we need to use `js_name` to ensure we always call
-    // `log` in JS.
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
-    fn log_u32(a: u32);
-
-    // Multiple arguments too!
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
-    fn log_many(a: &str, b: &str);
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
-#[derive(Copy, Clone, Debug)]
-enum PointCommand {
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PointCommand {
     Move,  // M x y
     Line,  // L x y
     Cubic, // C x1 y1, x2 y2, x y
@@ -35,11 +24,19 @@ enum PointCommand {
     Close, // Z x y
 }
 
+#[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 struct Point {
     command: PointCommand,
     x: f32,
     y: f32,
+}
+
+#[wasm_bindgen]
+impl Point {
+    pub fn new(x: f32, y: f32, command: PointCommand) -> Self {
+        Point { x, y, command }
+    }
 }
 
 struct Vector {
@@ -73,7 +70,7 @@ fn create_path(line: Vec<Point>) -> String {
         match po.command {
             PointCommand::Move => path_d.push_str(&format!("M {} {}", po.x, po.y)),
             PointCommand::Cubic => {
-                if i < 2 || i + 1 > line.len() {
+                if i < 2 || i + 2 > line.len() {
                     path_d.push_str(&format!(" L {} {}", po.x, po.y))
                 } else {
                     let p1 = line[i - 1];
@@ -120,24 +117,27 @@ fn test_create_path() {
 }
 
 // TODO: add fill, stroke, storke-width
+#[wasm_bindgen]
 #[derive(Clone, Debug)]
 struct SvgPath {
     d: Vec<Point>,
 }
+
+#[wasm_bindgen]
 impl SvgPath {
-    fn new() -> Self {
+    pub fn new() -> Self {
         SvgPath { d: Vec::new() }
     }
 
-    fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.d = Vec::new();
     }
 
-    fn add_point(&mut self, point: Point) {
+    pub fn add(&mut self, point: Point) {
         self.d.push(point);
     }
 
-    fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         format!(
             "<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />",
             create_path(self.d.to_vec())
@@ -153,16 +153,29 @@ struct SvgDrawing {
     paths: Vec<SvgPath>,
 }
 
+#[wasm_bindgen]
 impl SvgDrawing {
-    fn new(self) -> Self {
-        SvgDrawing { ..self }
+    pub fn new(width: u32, height: u32) -> Self {
+        SvgDrawing {
+            width,
+            height,
+            paths: Vec::new(),
+        }
     }
 
-    fn add_path(&mut self, path: SvgPath) {
+    // pub fn check() -> String {
+    //     "ok".to_string()
+    // }
+
+    pub fn clear(&mut self) {
+        self.paths = Vec::new();
+    }
+
+    pub fn add(&mut self, path: SvgPath) {
         self.paths.push(path);
     }
 
-    fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         let mut path_el = "".to_string();
         for p in self.paths.iter() {
             path_el.push_str(&p.to_string());
@@ -180,8 +193,8 @@ impl Default for SvgDrawing {
         }
     }
 }
-#[wasm_bindgen]
-pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
+#[wasm_bindgen(js_name=renderDraw)]
+pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
     let document = web_sys::window().unwrap().document().unwrap();
 
     let target_element = document
@@ -199,7 +212,7 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let pressed = pressed.clone();
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            svg_path.borrow_mut().add_point(Point {
+            svg_path.borrow_mut().add(Point {
                 command: PointCommand::Move,
                 x: event.offset_x() as f32,
                 y: event.offset_y() as f32,
@@ -231,7 +244,7 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
                     event.offset_y() as f64
                 ));
 
-                svg_path.borrow_mut().add_point(Point {
+                svg_path.borrow_mut().add(Point {
                     command: PointCommand::Cubic,
                     x: event.offset_x() as f32,
                     y: event.offset_y() as f32,
@@ -251,12 +264,12 @@ pub fn drawing_render(element_id: &str) -> Result<(), JsValue> {
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             pressed.set(false);
             log("mouseup");
-            svg_path.borrow_mut().add_point(Point {
+            svg_path.borrow_mut().add(Point {
                 command: PointCommand::Line,
                 x: event.offset_x() as f32,
                 y: event.offset_y() as f32,
             });
-            drawing.borrow_mut().add_path(svg_path.borrow().clone());
+            drawing.borrow_mut().add(svg_path.borrow().clone());
             render_element.set_inner_html(&drawing.borrow().to_string());
             svg_path.borrow_mut().clear();
         }) as Box<dyn FnMut(_)>);
