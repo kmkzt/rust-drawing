@@ -1,16 +1,6 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
-use std::cell::{Cell, RefCell};
-use std::rc::Rc;
 use std::f32::consts::PI;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-
-// refference: https://rustwasm.github.io/wasm-bindgen/examples/console-log.html
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
 // #[wasm_bindgen]
@@ -215,15 +205,22 @@ impl Default for SvgDrawing {
 }
 
 // Rust EventHandle App
+// use std::cell::{Cell, RefCell};
+// use std::rc::Rc;
+// use wasm_bindgen::JsCast;
+// // refference: https://rustwasm.github.io/wasm-bindgen/examples/console-log.html
+// #[wasm_bindgen]
+// extern "C" {
+//     #[wasm_bindgen(js_namespace = console)]
+//     fn log(s: &str);
+// }
 // #[wasm_bindgen(js_name=renderDraw)]
 // pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
 //     let document = web_sys::window().unwrap().document().unwrap();
-
 //     let target_element = document
 //         .get_element_by_id(element_id)
 //         .unwrap()
 //         .dyn_into::<web_sys::Element>()?;
-
 //     let pressed = Rc::new(Cell::new(false));
 //     let svg_path = Rc::new(RefCell::new(SvgPath::new()));
 //     // TODO: to size automatically
@@ -239,13 +236,11 @@ impl Default for SvgDrawing {
 //                 y: event.offset_y() as f32,
 //             });
 //             pressed.set(true);
-
 //             log(&format!(
 //                 "mousedown: x -> {}, y-> {}",
 //                 event.offset_x() as f64,
 //                 event.offset_y() as f64
 //             ));
-
 //             render_element.set_inner_html(&drawing.borrow().to_string());
 //         }) as Box<dyn FnMut(_)>);
 //         target_element
@@ -264,12 +259,10 @@ impl Default for SvgDrawing {
 //                     event.offset_x() as f64,
 //                     event.offset_y() as f64
 //                 ));
-
 //                 svg_path.borrow_mut().add(Point {
 //                     x: event.offset_x() as f32,
 //                     y: event.offset_y() as f32,
 //                 });
-
 //                 render_element.set_inner_html(&drawing.borrow().to_string());
 //             }
 //         }) as Box<dyn FnMut(_)>);
@@ -292,11 +285,9 @@ impl Default for SvgDrawing {
 //             render_element.set_inner_html(&drawing.borrow().to_string());
 //             svg_path.borrow_mut().clear();
 //         }) as Box<dyn FnMut(_)>);
-
 //         target_element
 //             .add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
 //         closure.forget();
 //     }
-
 //     Ok(())
 // }
