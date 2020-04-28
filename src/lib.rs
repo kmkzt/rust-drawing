@@ -12,30 +12,29 @@ extern "C" {
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
-#[wasm_bindgen]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PointCommand {
-    Move,  // M x y
-    Line,  // L x y
-    Cubic, // C x1 y1, x2 y2, x y
-    // ShortCutCubic, // S x2 y2, x y
-    // Quadratic, // Q x1 y1, x y
-    // TogatherQuadratic, // T x y
-    Close, // Z x y
-}
+// #[wasm_bindgen]
+// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+// pub enum PointCommand {
+//     Move,  // M x y
+//     Line,  // L x y
+//     Cubic, // C x1 y1, x2 y2, x y
+//     // ShortCutCubic, // S x2 y2, x y
+//     // Quadratic, // Q x1 y1, x y
+//     // TogatherQuadratic, // T x y
+//     Close, // Z x y
+// }
 
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 struct Point {
-    command: PointCommand,
     x: f32,
     y: f32,
 }
 
 #[wasm_bindgen]
 impl Point {
-    pub fn new(x: f32, y: f32, command: PointCommand) -> Self {
-        Point { x, y, command }
+    pub fn new(x: f32, y: f32) -> Self {
+        Point { x, y }
     }
 }
 
@@ -59,7 +58,6 @@ fn create_control_point(prev: &Point, curr: &Point, next: &Point) -> Point {
     let smooth_value = vector.value * SMOOTH_RATIO;
 
     Point {
-        command: PointCommand::Line,
         x: curr.x + vector.angle.cos() * smooth_value,
         y: curr.y + vector.angle.sin() * smooth_value,
     }
@@ -67,25 +65,23 @@ fn create_control_point(prev: &Point, curr: &Point, next: &Point) -> Point {
 fn create_path(line: Vec<Point>) -> String {
     let mut path_d = "".to_string();
     for (i, po) in line.iter().enumerate() {
-        match po.command {
-            PointCommand::Move => path_d.push_str(&format!("M {} {}", po.x, po.y)),
-            PointCommand::Cubic => {
-                if i < 2 || i + 2 > line.len() {
-                    path_d.push_str(&format!(" L {} {}", po.x, po.y))
-                } else {
-                    let p1 = line[i - 1];
-                    let p2 = line[i - 2];
-                    let n = line[i + 1];
-                    let cl = create_control_point(&p2, &p1, &po);
-                    let cr = create_control_point(&p1, &po, &n);
-                    path_d.push_str(&format!(
-                        " C {} {} {} {} {} {}",
-                        cl.x, cl.y, cr.x, cr.y, po.x, po.y
-                    ));
-                }
-            }
-            PointCommand::Close => path_d.push_str(&format!(" Z {} {}", po.x, po.y)),
-            _ => path_d.push_str(&format!(" L {} {}", po.x, po.y)),
+        if (i == 0 ) { // Start
+            path_d.push_str(&format!("M {} {}", po.x, po.y))
+        } else if i == line.len() { // End
+            path_d.push_str(&format!(" Z {} {}", po.x, po.y))
+        } else if i < 2 || i + 2 > line.len() { // Line
+            path_d.push_str(&format!(" L {} {}", po.x, po.y))
+        } else { // Cubic
+
+            let p1 = line[i - 1];
+            let p2 = line[i - 2];
+            let n = line[i + 1];
+            let cl = create_control_point(&p2, &p1, &po);
+            let cr = create_control_point(&p1, &po, &n);
+            path_d.push_str(&format!(
+                " C {} {} {} {} {} {}",
+                cl.x, cl.y, cr.x, cr.y, po.x, po.y
+            ));
         }
     }
 
@@ -97,17 +93,14 @@ fn test_create_path() {
     assert_eq!(
         create_path(vec![
             Point {
-                command: PointCommand::Move,
                 x: 0.0,
                 y: 0.0
             },
             Point {
-                command: PointCommand::Line,
                 x: 1.0,
                 y: 1.0
             },
             Point {
-                command: PointCommand::Close,
                 x: -1.0,
                 y: -1.0
             }
@@ -213,7 +206,6 @@ pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
         let render_element = target_element.clone();
         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
             svg_path.borrow_mut().add(Point {
-                command: PointCommand::Move,
                 x: event.offset_x() as f32,
                 y: event.offset_y() as f32,
             });
@@ -245,7 +237,6 @@ pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
                 ));
 
                 svg_path.borrow_mut().add(Point {
-                    command: PointCommand::Cubic,
                     x: event.offset_x() as f32,
                     y: event.offset_y() as f32,
                 });
@@ -265,7 +256,6 @@ pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
             pressed.set(false);
             log("mouseup");
             svg_path.borrow_mut().add(Point {
-                command: PointCommand::Line,
                 x: event.offset_x() as f32,
                 y: event.offset_y() as f32,
             });
