@@ -213,88 +213,90 @@ impl Default for SvgDrawing {
         }
     }
 }
-#[wasm_bindgen(js_name=renderDraw)]
-pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
-    let document = web_sys::window().unwrap().document().unwrap();
 
-    let target_element = document
-        .get_element_by_id(element_id)
-        .unwrap()
-        .dyn_into::<web_sys::Element>()?;
+// Rust EventHandle App
+// #[wasm_bindgen(js_name=renderDraw)]
+// pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
+//     let document = web_sys::window().unwrap().document().unwrap();
 
-    let pressed = Rc::new(Cell::new(false));
-    let svg_path = Rc::new(RefCell::new(SvgPath::new()));
-    // TODO: to size automatically
-    let drawing = Rc::new(RefCell::new(SvgDrawing::default()));
-    {
-        let drawing = drawing.clone();
-        let svg_path = svg_path.clone();
-        let pressed = pressed.clone();
-        let render_element = target_element.clone();
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            svg_path.borrow_mut().add(Point {
-                x: event.offset_x() as f32,
-                y: event.offset_y() as f32,
-            });
-            pressed.set(true);
+//     let target_element = document
+//         .get_element_by_id(element_id)
+//         .unwrap()
+//         .dyn_into::<web_sys::Element>()?;
 
-            log(&format!(
-                "mousedown: x -> {}, y-> {}",
-                event.offset_x() as f64,
-                event.offset_y() as f64
-            ));
+//     let pressed = Rc::new(Cell::new(false));
+//     let svg_path = Rc::new(RefCell::new(SvgPath::new()));
+//     // TODO: to size automatically
+//     let drawing = Rc::new(RefCell::new(SvgDrawing::default()));
+//     {
+//         let drawing = drawing.clone();
+//         let svg_path = svg_path.clone();
+//         let pressed = pressed.clone();
+//         let render_element = target_element.clone();
+//         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+//             svg_path.borrow_mut().add(Point {
+//                 x: event.offset_x() as f32,
+//                 y: event.offset_y() as f32,
+//             });
+//             pressed.set(true);
 
-            render_element.set_inner_html(&drawing.borrow().to_string());
-        }) as Box<dyn FnMut(_)>);
-        target_element
-            .add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
-        closure.forget();
-    }
-    {
-        let drawing = drawing.clone();
-        let svg_path = svg_path.clone();
-        let pressed = pressed.clone();
-        let render_element = target_element.clone();
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            if pressed.get() {
-                log(&format!(
-                    "mousemove: x -> {}, y-> {}",
-                    event.offset_x() as f64,
-                    event.offset_y() as f64
-                ));
+//             log(&format!(
+//                 "mousedown: x -> {}, y-> {}",
+//                 event.offset_x() as f64,
+//                 event.offset_y() as f64
+//             ));
 
-                svg_path.borrow_mut().add(Point {
-                    x: event.offset_x() as f32,
-                    y: event.offset_y() as f32,
-                });
+//             render_element.set_inner_html(&drawing.borrow().to_string());
+//         }) as Box<dyn FnMut(_)>);
+//         target_element
+//             .add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
+//         closure.forget();
+//     }
+//     {
+//         let drawing = drawing.clone();
+//         let svg_path = svg_path.clone();
+//         let pressed = pressed.clone();
+//         let render_element = target_element.clone();
+//         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+//             if pressed.get() {
+//                 log(&format!(
+//                     "mousemove: x -> {}, y-> {}",
+//                     event.offset_x() as f64,
+//                     event.offset_y() as f64
+//                 ));
 
-                render_element.set_inner_html(&drawing.borrow().to_string());
-            }
-        }) as Box<dyn FnMut(_)>);
-        target_element
-            .add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
-        closure.forget();
-    }
-    {
-        let drawing = drawing.clone();
-        let pressed = pressed.clone();
-        let render_element = target_element.clone();
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            pressed.set(false);
-            log("mouseup");
-            svg_path.borrow_mut().add(Point {
-                x: event.offset_x() as f32,
-                y: event.offset_y() as f32,
-            });
-            drawing.borrow_mut().add(svg_path.borrow().clone());
-            render_element.set_inner_html(&drawing.borrow().to_string());
-            svg_path.borrow_mut().clear();
-        }) as Box<dyn FnMut(_)>);
+//                 svg_path.borrow_mut().add(Point {
+//                     x: event.offset_x() as f32,
+//                     y: event.offset_y() as f32,
+//                 });
 
-        target_element
-            .add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
-        closure.forget();
-    }
+//                 render_element.set_inner_html(&drawing.borrow().to_string());
+//             }
+//         }) as Box<dyn FnMut(_)>);
+//         target_element
+//             .add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
+//         closure.forget();
+//     }
+//     {
+//         let drawing = drawing.clone();
+//         let pressed = pressed.clone();
+//         let render_element = target_element.clone();
+//         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+//             pressed.set(false);
+//             log("mouseup");
+//             svg_path.borrow_mut().add(Point {
+//                 x: event.offset_x() as f32,
+//                 y: event.offset_y() as f32,
+//             });
+//             drawing.borrow_mut().add(svg_path.borrow().clone());
+//             render_element.set_inner_html(&drawing.borrow().to_string());
+//             svg_path.borrow_mut().clear();
+//         }) as Box<dyn FnMut(_)>);
 
-    Ok(())
-}
+//         target_element
+//             .add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
+//         closure.forget();
+//     }
+
+//     Ok(())
+// }
