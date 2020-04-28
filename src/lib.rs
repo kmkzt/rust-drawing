@@ -52,6 +52,7 @@ fn create_vecor(prev: &Point, next: &Point) -> Vector {
         angle: vy.atan2(vx),
     }
 }
+
 const SMOOTH_RATIO: f32 = 0.2;
 fn create_control_point(prev: &Point, curr: &Point, next: &Point) -> Point {
     let vector = create_vecor(prev, next);
@@ -62,27 +63,40 @@ fn create_control_point(prev: &Point, curr: &Point, next: &Point) -> Point {
         y: curr.y + vector.angle.sin() * smooth_value,
     }
 }
-fn create_path(line: Vec<Point>) -> String {
+fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
     let mut path_d = "".to_string();
     for (i, po) in line.iter().enumerate() {
-        if (i == 0 ) { // Start
-            path_d.push_str(&format!("M {} {}", po.x, po.y))
-        } else if i == line.len() { // End
-            path_d.push_str(&format!(" Z {} {}", po.x, po.y))
-        } else if i < 2 || i + 2 > line.len() { // Line
-            path_d.push_str(&format!(" L {} {}", po.x, po.y))
-        } else { // Cubic
-
-            let p1 = line[i - 1];
-            let p2 = line[i - 2];
-            let n = line[i + 1];
-            let cl = create_control_point(&p2, &p1, &po);
-            let cr = create_control_point(&p1, &po, &n);
-            path_d.push_str(&format!(
-                " C {} {} {} {} {} {}",
-                cl.x, cl.y, cr.x, cr.y, po.x, po.y
-            ));
+        // Start
+        if i == 0 {
+            path_d.push_str(&format!("M {} {}", po.x, po.y));
+            continue;
         }
+        // Check Close
+        if i == line.len() - 1 && close {
+          path_d.push_str(&format!(" Z {} {}", po.x, po.y));
+          continue;
+        }
+        // Circuler
+        if circul {
+            if i < 2 || i + 2 > line.len() { // Line
+                path_d.push_str(&format!(" L {} {}", po.x, po.y))
+            } else { // Cubic
+
+                let p1 = line[i - 1];
+                let p2 = line[i - 2];
+                let n = line[i + 1];
+                let cl = create_control_point(&p2, &p1, &po);
+                let cr = create_control_point(&p1, &po, &n);
+                path_d.push_str(&format!(
+                    " C {} {} {} {} {} {}",
+                    cl.x, cl.y, cr.x, cr.y, po.x, po.y
+                ));
+            }
+            continue;
+        }
+
+        // Polygon
+        path_d.push_str(&format!(" L {} {}", po.x, po.y))
     }
 
     path_d
@@ -90,6 +104,7 @@ fn create_path(line: Vec<Point>) -> String {
 
 #[test]
 fn test_create_path() {
+    // Polygon Mode
     assert_eq!(
         create_path(vec![
             Point {
@@ -104,7 +119,7 @@ fn test_create_path() {
                 x: -1.0,
                 y: -1.0
             }
-        ]),
+        ], true, false),
         "M 0 0 L 1 1 Z -1 -1"
     );
 }
@@ -113,13 +128,19 @@ fn test_create_path() {
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 struct SvgPath {
+    close: bool,
+    circul: bool,
     d: Vec<Point>,
 }
 
 #[wasm_bindgen]
 impl SvgPath {
     pub fn new() -> Self {
-        SvgPath { d: Vec::new() }
+        SvgPath {
+            close: true,
+            circul: false,
+            d: Vec::new()
+        }
     }
 
     pub fn clear(&mut self) {
@@ -133,7 +154,7 @@ impl SvgPath {
     pub fn to_string(&self) -> String {
         format!(
             "<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />",
-            create_path(self.d.to_vec())
+            create_path(self.d.to_vec(), self.close, self.circul)
         )
     }
 }
