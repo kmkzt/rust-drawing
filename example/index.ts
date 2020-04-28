@@ -1,5 +1,9 @@
+import { throttle, debounce } from 'throttle-debounce'
+
 const WIDTH = 500
 const HEIGHT = 500
+const THROTTLE_DELAY = 20
+
 import('../pkg')
   .then(({ renderDraw, SvgDrawing, SvgPath, Point }: any): void => {
     renderDraw('app')
@@ -26,14 +30,17 @@ import('../pkg')
       console.log('START: x', x, 'y', y)
     })
 
-    el.addEventListener('mousemove', (ev) => {
-      if (!drawable) return
-      const rect = el.getBoundingClientRect()
-      const x = ev.clientX - rect.left
-      const y = ev.clientY - rect.top
-      wpath.add(Point.new(x, y))
-      console.log('MOVE: x', x, 'y', y)
-    })
+    el.addEventListener(
+      'mousemove',
+      throttle(THROTTLE_DELAY, (ev: MouseEvent) => {
+        if (!drawable) return
+        const rect = el.getBoundingClientRect()
+        const x = ev.clientX - rect.left
+        const y = ev.clientY - rect.top
+        wpath.add(Point.new(x, y))
+        console.log('MOVE: x', x, 'y', y)
+      })
+    )
 
     el.addEventListener('mouseup', (ev) => {
       drawable = false

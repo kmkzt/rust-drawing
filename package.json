@@ -11,11 +11,17 @@
     "@babel/preset-env": "7.9.0",
     "@babel/preset-react": "7.8.3",
     "@babel/preset-typescript": "7.8.3",
+    "@types/babel__core": "7.1.7",
+    "@types/babel__preset-env": "7.9.0",
+    "@types/eslint": "6.8.0",
+    "@types/eslint-plugin-prettier": "3.1.0",
     "@types/html-webpack-plugin": "3.2.2",
+    "@types/prettier": "2.0.0",
     "@types/text-encoding": "0.0.35",
+    "@types/throttle-debounce": "2.1.0",
     "@types/webpack": "4.41.10",
     "@types/webpack-dev-server": "3.10.1",
-    "@typescript-eslint/eslint-plugin": "2.0.0",  
+    "@typescript-eslint/eslint-plugin": "2.0.0",
     "@typescript-eslint/parser": "2.0.0",
     "@typescript-eslint/typescript-estree": "2.0.0",
     "@wasm-tool/wasm-pack-plugin": "1.2.0",
@@ -37,5 +43,8 @@
     "webpack": "4.42.1",
     "webpack-cli": "3.3.11",
     "webpack-dev-server": "3.10.3"
+  },
+  "dependencies": {
+    "throttle-debounce": "2.1.0"
   }
 }
