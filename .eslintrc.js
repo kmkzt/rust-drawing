@@ -24,19 +24,24 @@ module.exports = {
       jsx: true,
     },
   },
-  // settings: {
-  //   react: {
-  //     createClass: 'createReactClass',
-  //     pragma: 'React', // Pragma to use, default to "React"
-  //     version: '16.8',
-  //   },
-  //   propWrapperFunctions: [
-  //     'forbidExtraProps',
-  //     { property: 'freeze', object: 'Object' },
-  //     { property: 'myFavoriteWrapper' },
-  //   ],
-  //   linkComponents: ['Hyperlink', { name: 'Link', linkAttribute: 'to' }],
-  // },
+  settings: {
+    // react: {
+    //   createClass: 'createReactClass',
+    //   pragma: 'React', // Pragma to use, default to "React"
+    //   version: '16.8',
+    // },
+    // propWrapperFunctions: [
+    //   'forbidExtraProps',
+    //   { property: 'freeze', object: 'Object' },
+    //   { property: 'myFavoriteWrapper' },
+    // ],
+    // linkComponents: ['Hyperlink', { name: 'Link', linkAttribute: 'to' }],
+    'import/resolver': {
+      node: {
+        extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+      },
+    },
+  },
   rules: {
     // react-config -> https://github.com/yannickcr/eslint-plugin-react/
     // 'react/jsx-uses-react': 'error',
@@ -49,6 +54,8 @@ module.exports = {
     // 'jsx-a11y/no-static-element-interactions': [0],
     // 'jsx-a11y/click-events-have-key-events': [0],
     // 'jsx-a11y/interactive-supports-focus': [0],
+    '@typescript-eslint/no-explicit-any': [0],
+    'import/prefer-default-export': [0],
     strict: 'error',
     'no-comma-dangle': [0],
     'no-unused-vars': [0, { vars: 'all' }],

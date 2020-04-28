@@ -19,6 +19,7 @@
     "strict": true,
     "removeComments": true,
     "noImplicitReturns": true,
+    "noImplicitAny": true,
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

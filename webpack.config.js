@@ -91,5 +91,8 @@ module.exports = {
       TextEncoder: ['text-encoding', 'TextEncoder'],
     }),
   ],
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+  },
   mode: 'development',
 }
