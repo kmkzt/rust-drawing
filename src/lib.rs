@@ -1,6 +1,7 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
+use std::f32::consts::PI;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -54,13 +55,18 @@ fn create_vecor(prev: &Point, next: &Point) -> Vector {
 }
 
 const SMOOTH_RATIO: f32 = 0.2;
-fn create_control_point(prev: &Point, curr: &Point, next: &Point) -> Point {
+fn create_control_point(prev: &Point, curr: &Point, next: &Point, reverse: bool) -> Point {
     let vector = create_vecor(prev, next);
     let smooth_value = vector.value * SMOOTH_RATIO;
+    let angle = if reverse {
+        vector.angle + PI
+    } else {
+        vector.angle
+    };
 
     Point {
-        x: curr.x + vector.angle.cos() * smooth_value,
-        y: curr.y + vector.angle.sin() * smooth_value,
+        x: curr.x + angle.cos() * smooth_value,
+        y: curr.y + angle.sin() * smooth_value,
     }
 }
 fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
@@ -73,7 +79,7 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
         }
         // Check Close
         if i == line.len() - 1 && close {
-          path_d.push_str(&format!(" Z {} {}", po.x, po.y));
+          path_d.push_str(&format!(" L {} {} Z", po.x, po.y));
           continue;
         }
         // Circuler
@@ -85,8 +91,8 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
                 let p1 = line[i - 1];
                 let p2 = line[i - 2];
                 let n = line[i + 1];
-                let cl = create_control_point(&p2, &p1, &po);
-                let cr = create_control_point(&p1, &po, &n);
+                let cl = create_control_point(&p2, &p1, &po, false);
+                let cr = create_control_point(&p1, &po, &n, true);
                 path_d.push_str(&format!(
                     " C {} {} {} {} {} {}",
                     cl.x, cl.y, cr.x, cr.y, po.x, po.y
@@ -138,7 +144,7 @@ impl SvgPath {
     pub fn new() -> Self {
         SvgPath {
             close: true,
-            circul: false,
+            circul: true,
             d: Vec::new()
         }
     }
@@ -154,7 +160,7 @@ impl SvgPath {
     pub fn to_string(&self) -> String {
         format!(
             "<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />",
-            create_path(self.d.to_vec(), self.close, self.circul)
+            &create_path(self.d.to_vec(), self.close, self.circul)
         )
     }
 }
