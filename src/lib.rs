@@ -68,16 +68,17 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
             continue;
         }
         // Check Close
+        // TODO: Fix last point
         if i == line.len() - 1 && close {
-          path_d.push_str(&format!(" L {} {} Z", po.x, po.y));
-          continue;
+            path_d.push_str(&format!(" L {} {} Z", po.x, po.y));
+            continue;
         }
         // Circuler
         if circul {
-            if i < 2 || i + 2 > line.len() { // Line
+            // TODO: Fix frist and last point
+            if i < 2 || i + 2 > line.len() {
                 path_d.push_str(&format!(" L {} {}", po.x, po.y))
-            } else { // Cubic
-
+            } else {
                 let p1 = line[i - 1];
                 let p2 = line[i - 2];
                 let n = line[i + 1];
@@ -102,20 +103,15 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
 fn test_create_path() {
     // Polygon Mode
     assert_eq!(
-        create_path(vec![
-            Point {
-                x: 0.0,
-                y: 0.0
-            },
-            Point {
-                x: 1.0,
-                y: 1.0
-            },
-            Point {
-                x: -1.0,
-                y: -1.0
-            }
-        ], true, false),
+        create_path(
+            vec![
+                Point { x: 0.0, y: 0.0 },
+                Point { x: 1.0, y: 1.0 },
+                Point { x: -1.0, y: -1.0 }
+            ],
+            true,
+            false
+        ),
         "M 0 0 L 1 1 Z -1 -1"
     );
 }
@@ -135,7 +131,7 @@ impl SvgPath {
         SvgPath {
             close: true,
             circul: true,
-            d: Vec::new()
+            d: Vec::new(),
         }
     }
 
@@ -172,10 +168,6 @@ impl SvgDrawing {
             paths: Vec::new(),
         }
     }
-
-    // pub fn check() -> String {
-    //     "ok".to_string()
-    // }
 
     pub fn clear(&mut self) {
         self.paths = Vec::new();
