@@ -15,12 +15,13 @@ import('../pkg')
         `width: ${WIDTH}; height: ${HEIGHT}; border: 1px solid #000;`
       )
       const drawApp: any = SvgDrawing.new(WIDTH, HEIGHT)
-      const wpath = SvgPath.new()
-      const rect = el.getBoundingClientRect()
+      let wpath: any = null
       let drawable = false
       el.addEventListener('mousedown', (ev) => {
+        const rect = el.getBoundingClientRect()
         const x = ev.clientX - rect.left
         const y = ev.clientY - rect.top
+        wpath = SvgPath.new()
         wpath.add(Point.new(x, y, PointCommand.Move))
         drawable = true
         console.log('START: x', x, 'y', y)
@@ -28,6 +29,7 @@ import('../pkg')
 
       el.addEventListener('mousemove', (ev) => {
         if (!drawable) return
+        const rect = el.getBoundingClientRect()
         const x = ev.clientX - rect.left
         const y = ev.clientY - rect.top
         wpath.add(Point.new(x, y, PointCommand.Cubic))
@@ -36,6 +38,7 @@ import('../pkg')
 
       el.addEventListener('mouseup', (ev) => {
         drawable = false
+        const rect = el.getBoundingClientRect()
         const x = ev.clientX - rect.left
         const y = ev.clientY - rect.top
         wpath.add(Point.new(x, y, PointCommand.Cubic))
