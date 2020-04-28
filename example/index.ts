@@ -40,6 +40,8 @@ import('../pkg')
         const y = ev.clientY - rect.top
         wpath = SvgPath.new()
         wpath.add(Point.new(x, y))
+        drawApp.add(wpath.copy())
+        el.innerHTML = drawApp.to_string()
         drawable = true
         console.log('START: x', x, 'y', y)
       })
@@ -52,6 +54,8 @@ import('../pkg')
           const x = ev.clientX - rect.left
           const y = ev.clientY - rect.top
           wpath.add(Point.new(x, y))
+          drawApp.update(wpath.copy())
+          el.innerHTML = drawApp.to_string()
           console.log('MOVE: x', x, 'y', y, wpath)
         }, THROTTLE_DELAY)
       )
@@ -62,7 +66,7 @@ import('../pkg')
         const x = ev.clientX - rect.left
         const y = ev.clientY - rect.top
         wpath.add(Point.new(x, y))
-        drawApp.add(wpath)
+        drawApp.update(wpath)
         el.innerHTML = drawApp.to_string()
         console.log('END: x', x, 'y', y)
       })

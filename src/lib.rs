@@ -143,6 +143,10 @@ impl SvgPath {
         self.d.push(point);
     }
 
+    pub fn copy(&self) -> Self {
+        self.clone()
+    }
+
     pub fn to_string(&self) -> String {
         format!(
             "<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />",
@@ -174,6 +178,11 @@ impl SvgDrawing {
     }
 
     pub fn add(&mut self, path: SvgPath) {
+        self.paths.push(path);
+    }
+
+    pub fn update(&mut self, path: SvgPath) {
+        self.paths.pop();
         self.paths.push(path);
     }
 
