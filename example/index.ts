@@ -2,12 +2,20 @@ import { throttle, debounce } from 'throttle-debounce'
 
 const WIDTH = 500
 const HEIGHT = 500
-const THROTTLE_DELAY = 20
+const THROTTLE_DELAY = 150
 
 import('../pkg')
   .then(({ renderDraw, SvgDrawing, SvgPath, Point }: any): void => {
-    renderDraw('app')
-    console.log(SvgPath)
+    // Rust EventHandler
+    // const rustDrawing = (elementId: string): void => {
+    //   const app = document.getElementById(elementId)
+    //   app.setAttribute(
+    //     'style',
+    //     `width: ${WIDTH}; height: ${HEIGHT}; border: 1px solid orange;`
+    //   )
+    //   renderDraw(elementId)
+    // }
+    // rustDrawing('app')
 
     /**
      * Draw app
