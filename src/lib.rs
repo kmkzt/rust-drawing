@@ -1,6 +1,5 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
 use std::option::Option;
-use std::f32::consts::PI;
 use wasm_bindgen::prelude::*;
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
@@ -24,40 +23,44 @@ struct Point {
 }
 
 #[wasm_bindgen]
-impl Point {
-    pub fn new(x: f32, y: f32) -> Self {
-        Point { x, y }
-    }
-}
-
 struct Vector {
     value: f32,
     angle: f32,
 }
 
-fn create_vecor(prev: &Point, next: &Point) -> Vector {
-    let vx = next.x - prev.x;
-    let vy = next.y - prev.y;
+impl Vector {
+    pub fn point(&self) -> Point {
+        Point {
+            x: self.angle.cos() * self.value,
+            y: self.angle.sin() * self.value
+        }
+    }
+}
 
-    Vector {
-        value: (vx.powf(2.0) + vy.powf(2.0)).sqrt(),
-        angle: vy.atan2(vx),
+#[wasm_bindgen]
+impl Point {
+    pub fn new(x: f32, y: f32) -> Self {
+        Point { x, y }
+    }
+
+    pub fn vector(&self, p: &Point) -> Vector {
+        let vx = p.x - self.x;
+        let vy = p.y - self.y;
+
+        Vector {
+            value: (vx.powf(2.0) + vy.powf(2.0)).sqrt(),
+            angle: vy.atan2(vx),
+        }
     }
 }
 
 const SMOOTH_RATIO: f32 = 0.2;
-fn create_control_point(prev: &Point, curr: &Point, next: &Point, reverse: bool) -> Point {
-    let vector = create_vecor(prev, next);
-    let smooth_value = vector.value * SMOOTH_RATIO;
-    let angle = if reverse {
-        vector.angle + PI
-    } else {
-        vector.angle
-    };
+fn create_control_point(prev: &Point, curr: &Point, next: &Point) -> Point {
+    let control = prev.vector(next).point();
 
     Point {
-        x: curr.x + angle.cos() * smooth_value,
-        y: curr.y + angle.sin() * smooth_value,
+        x: curr.x + control.x * SMOOTH_RATIO,
+        y: curr.y + control.y * SMOOTH_RATIO,
     }
 }
 fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
@@ -79,8 +82,8 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
                 let p1 = line[i - 1];
                 let p2 = line[i - 2];
                 let n = line[i + 1];
-                let cl = create_control_point(&p2, &p1, &po, false);
-                let cr = create_control_point(&p1, &po, &n, true);
+                let cl = create_control_point(&p2, &p1, &po);
+                let cr = create_control_point(&n, &po, &p1);
                 path_d.push_str(&format!(
                     " C {} {} {} {} {} {}",
                     cl.x, cl.y, cr.x, cr.y, po.x, po.y
@@ -113,7 +116,7 @@ fn test_create_path() {
             true,
             false
         ),
-        "M 0 0 L 1 1 Z -1 -1"
+        "M 0 0 L 1 1 L -1 -1 Z"
     );
 }
 
