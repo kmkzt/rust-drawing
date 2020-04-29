@@ -7,7 +7,7 @@ export function throttle<T extends (...args: any) => any>(
   func: T,
   wait: number,
   options: Options = {}
-): T {
+): (...args: Parameters<T>) => ReturnType<T> {
   let context: Function | null
   let args: IArguments | null
   let result: ReturnType<T> | null
@@ -45,5 +45,5 @@ export function throttle<T extends (...args: any) => any>(
       timeout = setTimeout(later, remaining)
     }
     return result
-  } as T
+  }
 }
