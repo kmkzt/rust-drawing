@@ -1,4 +1,5 @@
 // refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
+use std::option::Option;
 use std::f32::consts::PI;
 use wasm_bindgen::prelude::*;
 
@@ -127,12 +128,39 @@ struct SvgPath {
 
 #[wasm_bindgen]
 impl SvgPath {
-    pub fn new() -> Self {
+    pub fn new(close: Option<bool>, circul: Option<bool>) -> Self {
+
         SvgPath {
-            close: false,
-            circul: true,
+            close: match close {
+                Some(clo) => clo,
+                None => false
+            }  ,
+            circul: match circul {
+                Some(cir) => cir,
+                None => false
+            },
             d: Vec::new(),
         }
+    }
+
+    #[wasm_bindgen(js_name=isCircul)]
+    pub fn is_circul(&self) -> bool {
+        self.circul
+    }
+
+    #[wasm_bindgen(js_name=toggleCircul)]
+    pub fn toggle_circul(&mut self)  {
+        self.circul = !self.circul
+    }
+
+    #[wasm_bindgen(js_name=isClose)]
+    pub fn is_close(&self) -> bool {
+        self.close
+    }
+
+    #[wasm_bindgen(js_name=toggleClose)]
+    pub fn toggle_close(&mut self)  {
+        self.close = !self.close
     }
 
     pub fn clear(&mut self) {

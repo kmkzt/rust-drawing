@@ -4,6 +4,9 @@ const WIDTH = 500
 const HEIGHT = 500
 const THROTTLE_DELAY = 150
 
+let closePath = false
+let circulPath = false
+
 import('../pkg')
   .then(
     ({
@@ -34,11 +37,12 @@ import('../pkg')
       const drawApp: any = SvgDrawing.new(WIDTH, HEIGHT)
       let wpath: any = null
       let drawable = false
+
       el.addEventListener('mousedown', (ev) => {
         const rect = el.getBoundingClientRect()
         const x = ev.clientX - rect.left
         const y = ev.clientY - rect.top
-        wpath = SvgPath.new()
+        wpath = SvgPath.new(closePath, circulPath)
         wpath.add(Point.new(x, y))
         drawApp.add(wpath.copy())
         el.innerHTML = drawApp.to_string()
@@ -56,7 +60,7 @@ import('../pkg')
           wpath.add(Point.new(x, y))
           drawApp.update(wpath.copy())
           el.innerHTML = drawApp.to_string()
-          console.log('MOVE: x', x, 'y', y, wpath)
+          console.log('MOVE: x', x, 'y', y, wpath.isClose())
         }, THROTTLE_DELAY)
       )
 
@@ -81,6 +85,24 @@ import('../pkg')
         el.innerHTML = drawApp.to_string()
       })
       document.body.appendChild(clearBtn)
+      /**
+       * Toggle Path Close Button
+       */
+      const toggleCloseButton = document.createElement('button')
+      toggleCloseButton.innerHTML = 'toggle close path'
+      toggleCloseButton.addEventListener('click', () => {
+        closePath = !closePath
+      })
+      document.body.appendChild(toggleCloseButton)
+      /**
+       * Toggle Path Circul Button
+       */
+      const togglCirculButton = document.createElement('button')
+      togglCirculButton.innerHTML = 'toggle circul path'
+      togglCirculButton.addEventListener('click', () => {
+        circulPath = !circulPath
+      })
+      document.body.appendChild(togglCirculButton)
     }
   )
   .catch(console.error)
