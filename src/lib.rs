@@ -69,14 +69,10 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
         }
         // Check Close
         // TODO: Fix last point
-        if i == line.len() - 1 && close {
-            path_d.push_str(&format!(" L {} {} Z", po.x, po.y));
-            continue;
-        }
         // Circuler
         if circul {
             // TODO: Fix frist and last point
-            if i < 2 || i + 2 > line.len() {
+            if i < 2 || i > line.len() - 2 {
                 path_d.push_str(&format!(" L {} {}", po.x, po.y))
             } else {
                 let p1 = line[i - 1];
@@ -94,6 +90,10 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
 
         // Polygon
         path_d.push_str(&format!(" L {} {}", po.x, po.y))
+    }
+
+    if close {
+        path_d.push_str(" Z");
     }
 
     path_d
@@ -129,7 +129,7 @@ struct SvgPath {
 impl SvgPath {
     pub fn new() -> Self {
         SvgPath {
-            close: true,
+            close: false,
             circul: true,
             d: Vec::new(),
         }
