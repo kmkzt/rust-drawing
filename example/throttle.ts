@@ -7,11 +7,11 @@ export function throttle<T extends (...args: any) => any>(
   func: T,
   wait: number,
   options: Options = {}
-): (...args: Parameters<T>) => ReturnType<T> {
-  let context: Function | null
-  let args: IArguments | null
+): (...args: Parameters<T>) => ReturnType<T> | null {
+  let context: any | null
+  let args: any | null
   let result: ReturnType<T> | null
-  let timeout = null
+  let timeout: any | null = null
   let previous = 0
 
   const later = (): void => {
@@ -24,7 +24,10 @@ export function throttle<T extends (...args: any) => any>(
     }
   }
 
-  return function wrap(...wraparg: any): any {
+  return function wrap(
+    this: typeof func,
+    ...wraparg: Parameters<T>
+  ): ReturnType<T> | null {
     const now = Date.now()
     if (!previous && options.leading === false) previous = now
     const remaining = wait - (now - previous)
