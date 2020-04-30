@@ -10,7 +10,7 @@ const eslintLoader = {
   loader: 'eslint-loader',
   options: {
     fix: isDev,
-    failOnWarning: !isDev,
+    failOnWarning: false,
   },
 }
 module.exports = {
@@ -91,5 +91,8 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
-  mode: 'development',
+  mode: isDev ? 'development' : 'production',
+  optimization: {
+    minimize: !isDev,
+  },
 }
