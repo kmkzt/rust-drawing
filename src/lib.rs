@@ -1,20 +1,6 @@
-// refference: https://github.com/rustwasm/wasm-bindgen/tree/master/examples/paint
 use std::ops::{Add, Sub};
 use std::option::Option;
 use wasm_bindgen::prelude::*;
-
-// https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
-// #[wasm_bindgen]
-// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-// pub enum PointCommand {
-//     Move,  // M x y
-//     Line,  // L x y
-//     Cubic, // C x1 y1, x2 y2, x y
-//     // ShortCutCubic, // S x2 y2, x y
-//     // Quadratic, // Q x1 y1, x y
-//     // TogatherQuadratic, // T x y
-//     Close, // Z x y
-// }
 
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -136,6 +122,7 @@ fn test_point() {
     }
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
 fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
     const SMOOTH_RATIO: f32 = 0.2;
     let mut path_d = "".to_string();
@@ -145,8 +132,6 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
             path_d.push_str(&format!("M {} {}", po.x, po.y));
             continue;
         }
-        // Check Close
-        // TODO: Fix last point
         // Circuler
         if circul {
             // TODO: Fix frist and last point
@@ -325,91 +310,3 @@ impl Default for SvgDrawing {
         }
     }
 }
-
-// Rust EventHandle App
-// use std::cell::{Cell, RefCell};
-// use std::rc::Rc;
-// use wasm_bindgen::JsCast;
-// // refference: https://rustwasm.github.io/wasm-bindgen/examples/console-log.html
-// #[wasm_bindgen]
-// extern "C" {
-//     #[wasm_bindgen(js_namespace = console)]
-//     fn log(s: &str);
-// }
-// #[wasm_bindgen(js_name=renderDraw)]
-// pub fn render_draw_app(element_id: &str) -> Result<(), JsValue> {
-//     let document = web_sys::window().unwrap().document().unwrap();
-//     let target_element = document
-//         .get_element_by_id(element_id)
-//         .unwrap()
-//         .dyn_into::<web_sys::Element>()?;
-//     let pressed = Rc::new(Cell::new(false));
-//     let svg_path = Rc::new(RefCell::new(SvgPath::new()));
-//     // TODO: to size automatically
-//     let drawing = Rc::new(RefCell::new(SvgDrawing::default()));
-//     {
-//         let drawing = drawing.clone();
-//         let svg_path = svg_path.clone();
-//         let pressed = pressed.clone();
-//         let render_element = target_element.clone();
-//         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-//             svg_path.borrow_mut().add(Point {
-//                 x: event.offset_x() as f32,
-//                 y: event.offset_y() as f32,
-//             });
-//             pressed.set(true);
-//             log(&format!(
-//                 "mousedown: x -> {}, y-> {}",
-//                 event.offset_x() as f64,
-//                 event.offset_y() as f64
-//             ));
-//             render_element.set_inner_html(&drawing.borrow().to_string());
-//         }) as Box<dyn FnMut(_)>);
-//         target_element
-//             .add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
-//         closure.forget();
-//     }
-//     {
-//         let drawing = drawing.clone();
-//         let svg_path = svg_path.clone();
-//         let pressed = pressed.clone();
-//         let render_element = target_element.clone();
-//         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-//             if pressed.get() {
-//                 log(&format!(
-//                     "mousemove: x -> {}, y-> {}",
-//                     event.offset_x() as f64,
-//                     event.offset_y() as f64
-//                 ));
-//                 svg_path.borrow_mut().add(Point {
-//                     x: event.offset_x() as f32,
-//                     y: event.offset_y() as f32,
-//                 });
-//                 render_element.set_inner_html(&drawing.borrow().to_string());
-//             }
-//         }) as Box<dyn FnMut(_)>);
-//         target_element
-//             .add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
-//         closure.forget();
-//     }
-//     {
-//         let drawing = drawing.clone();
-//         let pressed = pressed.clone();
-//         let render_element = target_element.clone();
-//         let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-//             pressed.set(false);
-//             log("mouseup");
-//             svg_path.borrow_mut().add(Point {
-//                 x: event.offset_x() as f32,
-//                 y: event.offset_y() as f32,
-//             });
-//             drawing.borrow_mut().add(svg_path.borrow().clone());
-//             render_element.set_inner_html(&drawing.borrow().to_string());
-//             svg_path.borrow_mut().clear();
-//         }) as Box<dyn FnMut(_)>);
-//         target_element
-//             .add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
-//         closure.forget();
-//     }
-//     Ok(())
-// }
