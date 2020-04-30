@@ -126,33 +126,39 @@ fn test_point() {
 fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
     const SMOOTH_RATIO: f32 = 0.2;
     let mut path_d = "".to_string();
+    fn circul_command(p1: &Point, p2: &Point, cp: &Point, np: &Point) -> String {
+        let cl = p1.control(&p2.vector(cp).scale(SMOOTH_RATIO));
+        let cr = cp.control(&np.vector(p1).scale(SMOOTH_RATIO));
+
+        format!(" C {} {} {} {} {} {}", cl.x, cl.y, cr.x, cr.y, cp.x, cp.y)
+    }
     for (i, po) in line.iter().enumerate() {
         // Start
         if i == 0 {
-            path_d.push_str(&format!("M {} {}", po.x, po.y));
+            path_d.push_str(&format!("M {} {}", &po.x, &po.y));
             continue;
         }
         // Circuler
         if circul {
-            // TODO: Fix frist and last point
-            if i < 2 || i > line.len() - 2 {
-                path_d.push_str(&format!(" L {} {}", po.x, po.y))
+            // TODO: Fix frist circuler point
+            if i < 2 {
+                path_d.push_str(&format!(" L {} {}", &po.x, &po.y))
+            // path_d.push_str(&circul_command(&line[0], &line[0], &po, &line[i + 1]));
+            } else if i > line.len() - 2 {
+                path_d.push_str(&circul_command(&line[i - 1], &line[i - 2], &po, &po));
             } else {
-                let p1 = line[i - 1];
-                let p2 = line[i - 2];
-                let n = line[i + 1];
-                let cl = &p1.control(&p2.vector(&po).scale(SMOOTH_RATIO));
-                let cr = &po.control(&n.vector(&p1).scale(SMOOTH_RATIO));
-                path_d.push_str(&format!(
-                    " C {} {} {} {} {} {}",
-                    cl.x, cl.y, cr.x, cr.y, po.x, po.y
+                path_d.push_str(&circul_command(
+                    &line[i - 1],
+                    &line[i - 2],
+                    &po,
+                    &line[i + 1],
                 ));
             }
             continue;
         }
 
         // Polygon
-        path_d.push_str(&format!(" L {} {}", po.x, po.y))
+        path_d.push_str(&format!(" L {} {}", &po.x, &po.y))
     }
 
     if close {
@@ -164,7 +170,7 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
 
 #[test]
 fn test_create_path() {
-    // Polygon Mode
+    // Polygon
     assert_eq!(
         create_path(
             vec![
@@ -176,6 +182,23 @@ fn test_create_path() {
             false
         ),
         "M 0 0 L 1 1 L -1 -1 Z"
+    );
+
+    // Circuler
+    assert_eq!(
+        create_path(
+            vec![
+                Point { x: 0.0, y: 0.0 },
+                Point { x: 1.0, y: 1.0 },
+                Point { x: 2.0, y: 1.0 },
+                Point { x: 3.0, y: 0.0 }
+            ],
+            true,
+            true
+        ),
+        // TODO: Fix
+        // "M 0 0 L 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
+        "M 0 0 L 1 1 C 1.4 1.2 1.5999999 1.1999999 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
     );
 }
 
