@@ -1,5 +1,7 @@
+const isDev = process.env.NODE_ENV !== 'development'
+
 module.exports = (api) => {
-  api.cache(process.env.NODE_ENV === 'development')
+  api.cache(isDev)
   return {
     presets: [
       [
@@ -18,13 +20,14 @@ module.exports = (api) => {
       '@babel/plugin-proposal-class-properties',
       '@babel/plugin-proposal-object-rest-spread',
       [
-        'emotion',
+        'babel-plugin-styled-components',
         {
-          // sourceMap is on by default but source maps are dead code eliminated in production
-          sourceMap: true,
-          autoLabel: process.env.NODE_ENV !== 'production',
-          labelFormat: '[local]',
-          cssPropOptimization: true,
+          minify: !isDev,
+          transpileTemplateLiterals: !isDev,
+          pure: !isDev,
+          ssr: false,
+          displayName: isDev,
+          fileName: isDev,
         },
       ],
     ],
