@@ -3,6 +3,11 @@
     "build": "NODE_ENV=production webpack",
     "dev": "NODE_ENV=development webpack-dev-server"
   },
+  "dependencies": {
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "@emotion/core": "10.0.28"
+  },
   "devDependencies": {
     "@babel/core": "7.8.4",
     "@babel/plugin-proposal-class-properties": "7.8.3",
@@ -17,8 +22,9 @@
     "@types/eslint-plugin-prettier": "3.1.0",
     "@types/html-webpack-plugin": "3.2.2",
     "@types/prettier": "2.0.0",
+    "@types/react": "16.9.34",
+    "@types/react-dom": "16.9.7",
     "@types/text-encoding": "0.0.35",
-    "@types/throttle-debounce": "2.1.0",
     "@types/webpack": "4.41.10",
     "@types/webpack-dev-server": "3.10.1",
     "@typescript-eslint/eslint-plugin": "2.0.0",
@@ -35,6 +41,7 @@
     "eslint-plugin-jsx-a11y": "6.2.3",
     "eslint-plugin-prettier": "3.1.2",
     "eslint-plugin-react": "7.19.0",
+    "eslint-plugin-react-hooks": "3.0.0",
     "html-webpack-plugin": "3.2.0",
     "prettier": "2.0.5",
     "text-encoding": "0.7.0",
