@@ -19,6 +19,7 @@ module.exports = {
     '@typescript-eslint',
     'jsx-a11y',
     'prettier',
+    'emotion',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -55,6 +56,10 @@ module.exports = {
     'react/prop-types': [0],
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
+    'emotion/jsx-import': 'error',
+    'emotion/no-vanilla': 'error',
+    'emotion/import-from-emotion': 'error',
+    'emotion/styled-import': 'error',
     'jsx-a11y/no-static-element-interactions': [0],
     'jsx-a11y/click-events-have-key-events': [0],
     'jsx-a11y/interactive-supports-focus': [0],
