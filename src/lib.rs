@@ -157,10 +157,13 @@ fn test_point() {
         let curr = Point { x: 2.0, y: 2.0 };
         let next = Point { x: 3.0, y: 1.0 };
         let vector = prev.vector(&next);
-        assert_eq!(vector, Vector {
-            value: 2.0,
-            angle: 0.0
-        });
+        assert_eq!(
+            vector,
+            Vector {
+                value: 2.0,
+                angle: 0.0
+            }
+        );
         assert_eq!(curr.control(&vector.scale(0.2)), Point { x: 2.4, y: 2.0 });
     }
     // scale
@@ -268,12 +271,14 @@ fn test_create_path() {
     );
 }
 
-// TODO: add fill, stroke, storke-width
 #[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq)]
 struct SvgPath {
     close: bool,
     circul: bool,
+    stroke_width: f32,
+    stroke: String,
+    fill: String,
     d: Vec<Point>,
 }
 
@@ -289,6 +294,9 @@ impl SvgPath {
                 Some(cir) => cir,
                 None => false,
             },
+            stroke_width: 1.0,
+            stroke: "black".to_string(),
+            fill: "none".to_string(),
             d: Vec::new(),
         }
     }
@@ -325,11 +333,32 @@ impl SvgPath {
         self.clone()
     }
 
+    pub fn data(&self) -> String {
+        create_path(self.d.to_vec(), self.close, self.circul)
+    }
+
     pub fn to_string(&self) -> String {
-        format!(
-            "<path stroke=\"black\" stroke-width=\"1\" fill=\"transparent\" d=\"{}\" />",
-            &create_path(self.d.to_vec(), self.close, self.circul)
-        )
+        let mut path = "<path".to_string();
+
+        // stroke
+        path.push_str(&format!(" stroke=\"{}\"", &self.stroke));
+
+        // stroke-width
+        if self.stroke_width >= 0.0 {
+            path.push_str(&format!(" stroke-width=\"{}\"", &self.stroke_width));
+        }
+
+        // fill
+        path.push_str(&format!(" fill=\"{}\"", &self.fill));
+
+        path.push_str(&format!(
+            " d=\"{}\"",
+            &self.data()
+        ));
+
+        path.push_str(" />");
+
+        path
     }
 }
 
