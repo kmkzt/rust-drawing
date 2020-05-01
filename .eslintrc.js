@@ -55,6 +55,7 @@ module.exports = {
     // 'jsx-a11y/click-events-have-key-events': [0],
     // 'jsx-a11y/interactive-supports-focus': [0],
     '@typescript-eslint/no-explicit-any': [0],
+    '@typescript-eslint/explicit-function-return-type': [0],
     'import/prefer-default-export': [0],
     strict: 'error',
     'no-comma-dangle': [0],
