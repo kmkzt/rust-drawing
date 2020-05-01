@@ -56,6 +56,8 @@ export class Drawing {
           this.init()
         })
         .catch(console.error)
+    } else {
+      this.init()
     }
   }
 

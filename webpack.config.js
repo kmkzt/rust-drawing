@@ -14,10 +14,10 @@ const eslintLoader = {
   },
 }
 module.exports = {
-  entry: './example/index.ts',
+  entry: './example/index.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'index.js',
+    filename: isDev ? 'index.js' : 'index.[hash].js',
   },
   module: {
     rules: [
