@@ -96,6 +96,38 @@ impl Sub for Point {
 }
 
 #[test]
+fn test_vector() {
+    // to point
+    {
+        // TODO: Fix to convert Point { x: 1.0, y: 1.0 }
+        assert_eq!(
+            Vector {
+                value: 1.4142135,
+                angle: 0.7853982
+            }
+            .point(),
+            Point {
+                x: 0.99999994,
+                y: 0.99999994
+            }
+        );
+    }
+    // scale
+    {
+        assert_eq!(
+            Vector {
+                value: 1.0,
+                angle: 0.5
+            }
+            .scale(0.3),
+            Vector {
+                value: 0.3,
+                angle: 0.5
+            }
+        )
+    }
+}
+#[test]
 fn test_point() {
     // add sub
     {
@@ -118,27 +150,18 @@ fn test_point() {
                 angle: 0.7853982
             }
         );
-
-        // TODO: Fix to convert Point { x: 1.0, y: 1.0 }
-        assert_eq!(
-            Vector {
-                value: 1.4142135,
-                angle: 0.7853982
-            }
-            .point(),
-            Point {
-                x: 0.99999994,
-                y: 0.99999994
-            }
-        );
     }
     // control
     {
         let prev = Point { x: 1.0, y: 1.0 };
         let curr = Point { x: 2.0, y: 2.0 };
         let next = Point { x: 3.0, y: 1.0 };
-        let vector = prev.vector(&next).scale(0.2);
-        assert_eq!(curr.control(&vector), Point { x: 2.4, y: 2.0 });
+        let vector = prev.vector(&next);
+        assert_eq!(vector, Vector {
+            value: 2.0,
+            angle: 0.0
+        });
+        assert_eq!(curr.control(&vector.scale(0.2)), Point { x: 2.4, y: 2.0 });
     }
     // scale
     {
