@@ -15,6 +15,12 @@ export class Drawing {
 
   public pathCirculer = false
 
+  public fill = 'none'
+
+  public stroke = 'black'
+
+  public strokeWidth = 1.0
+
   public delay: number
 
   private el: HTMLElement
@@ -80,6 +86,18 @@ export class Drawing {
     this.render()
   }
 
+  private createPath(): any {
+    const pa = Drawing.Mod.SvgPath.new(this.pathClose, this.pathCirculer)
+    pa.setFill(this.fill)
+    pa.setStroke(this.stroke)
+    pa.setStrokeWidth(this.strokeWidth)
+    return pa
+  }
+
+  private static createPoint(x: number, y: number): any {
+    return Drawing.Mod.Point.new(x, y)
+  }
+
   private handleMouse(cb: (arg: Point) => void) {
     return (ev: MouseEvent): void => {
       const rect = this.el.getBoundingClientRect()
@@ -88,8 +106,8 @@ export class Drawing {
   }
 
   private drawStart({ x, y }: Point) {
-    this.wpath = Drawing.Mod.SvgPath.new(this.pathClose, this.pathCirculer)
-    this.wpath.add(Drawing.Mod.Point.new(x, y))
+    this.wpath = this.createPath()
+    this.wpath.add(Drawing.createPoint(x, y))
     this.app.add(this.wpath.copy())
     this.el.innerHTML = this.app.to_string()
     this.drawable = true
@@ -98,7 +116,7 @@ export class Drawing {
 
   private drawMove({ x, y }: Point) {
     if (!this.drawable) return
-    this.wpath.add(Drawing.Mod.Point.new(x, y))
+    this.wpath.add(Drawing.createPoint(x, y))
     this.app.update(this.wpath.copy())
     this.render()
     console.log('MOVE: x', x, 'y', y, this.wpath.isClose())
@@ -106,7 +124,7 @@ export class Drawing {
 
   private drawEnd({ x, y }: Point) {
     this.drawable = false
-    this.wpath.add(Drawing.Mod.Point.new(x, y))
+    this.wpath.add(Drawing.createPoint(x, y))
     this.app.update(this.wpath)
     this.render()
     console.log('END: x', x, 'y', y)

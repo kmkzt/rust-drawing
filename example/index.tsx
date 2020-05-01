@@ -46,6 +46,21 @@ const App = () => {
     },
     [drawing]
   )
+  const handleFillColor = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (!drawing) return
+      drawing.fill = e.target.value
+    },
+    [drawing]
+  )
+
+  const handleStrokeColor = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (!drawing) return
+      drawing.stroke = e.target.value
+    },
+    [drawing]
+  )
 
   useEffect(() => {
     if (loaded) return
@@ -70,6 +85,22 @@ const App = () => {
           THROTTLE:
           {String(delay)}
         </div>
+      </div>
+      <div>
+        FILL:
+        <input
+          type="text"
+          placeholder="#000 or black or rgba(0,0,0,1)"
+          onChange={handleFillColor}
+        />
+      </div>
+      <div>
+        STROKE:
+        <input
+          type="text"
+          placeholder="#000 or black or rgba(0,0,0,1)"
+          onChange={handleStrokeColor}
+        />
       </div>
       <button type="button" onClick={handleClear}>
         CLEAR

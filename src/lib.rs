@@ -321,6 +321,36 @@ impl SvgPath {
         self.close = !self.close
     }
 
+    #[wasm_bindgen(js_name=getStrokeWidth)]
+    pub fn get_stroke_width(&self) -> f32 {
+        self.stroke_width
+    }
+
+     #[wasm_bindgen(js_name=setStrokeWidth)]
+    pub fn set_stroke_width(&mut self, stroke_width: f32) {
+        self.stroke_width = stroke_width
+    }
+
+    #[wasm_bindgen(js_name=getStroke)]
+    pub fn get_stroke(&self) -> String {
+        self.stroke.to_string()
+    }
+
+    #[wasm_bindgen(js_name=setStroke)]
+    pub fn set_stroke(&mut self, stroke: &str) {
+        self.stroke = stroke.to_string();
+    }
+
+    #[wasm_bindgen(js_name=getFill)]
+    pub fn get_fill(&self) -> String {
+        self.fill.to_string()
+    }
+
+    #[wasm_bindgen(js_name=setFill)]
+    pub fn set_fill(&mut self, fill: &str) {
+        self.fill = fill.to_string();
+    }
+
     pub fn clear(&mut self) {
         self.d = Vec::new();
     }
