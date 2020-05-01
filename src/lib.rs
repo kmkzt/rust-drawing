@@ -56,6 +56,21 @@ impl Point {
     pub fn control(&self, v: &Vector) -> Self {
         v.point().add(*self)
     }
+
+    pub fn command_move(&self) -> String {
+        format!("M {} {}", self.x, self.y)
+    }
+
+    pub fn command_line(&self) -> String {
+        format!(" L {} {}", self.x, self.y)
+    }
+
+    pub fn command_circuler(&self, cl: &Point, cr: &Point) -> String {
+        format!(
+            " C {} {} {} {} {} {}",
+            cl.x, cl.y, cr.x, cr.y, self.x, self.y
+        )
+    }
 }
 
 impl Add for Point {
@@ -82,6 +97,18 @@ impl Sub for Point {
 
 #[test]
 fn test_point() {
+    // add sub
+    {
+        assert_eq!(
+            Point::new(1.0, 1.0) + Point::new(2.0, 2.0),
+            Point { x: 3.0, y: 3.0 }
+        );
+        assert_eq!(
+            Point::new(3.0, 3.0) - Point::new(1.0, 1.0),
+            Point { x: 2.0, y: 2.0 }
+        );
+    }
+
     // vector
     {
         assert_eq!(
@@ -120,36 +147,52 @@ fn test_point() {
             Point { x: 0.2, y: 0.2 }
         )
     }
+
+    // command
+    {
+        // move
+        assert_eq!(Point { x: 1.0, y: 1.0 }.command_move(), "M 1 1");
+        assert_eq!(Point { x: 1.1, y: 1.1 }.command_move(), "M 1.1 1.1");
+        // line
+        assert_eq!(Point { x: 1.0, y: 1.0 }.command_line(), " L 1 1");
+        assert_eq!(Point { x: 1.1, y: 1.1 }.command_line(), " L 1.1 1.1");
+        // Circuler
+        assert_eq!(
+            Point { x: 1.0, y: 1.0 }
+                .command_circuler(&Point { x: 0.2, y: 1.2 }, &Point { x: 0.8, y: 1.2 }),
+            " C 0.2 1.2 0.8 1.2 1 1"
+        );
+    }
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
 fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
     const SMOOTH_RATIO: f32 = 0.2;
     let mut path_d = "".to_string();
-    fn circul_command(p1: &Point, p2: &Point, cp: &Point, np: &Point) -> String {
-        let cl = p1.control(&p2.vector(cp).scale(SMOOTH_RATIO));
-        let cr = cp.control(&np.vector(p1).scale(SMOOTH_RATIO));
+    fn complement_circuler(prev: &Point, start: &Point, end: &Point, next: &Point) -> String {
+        let cl = start.control(&prev.vector(end).scale(SMOOTH_RATIO));
+        let cr = end.control(&next.vector(start).scale(SMOOTH_RATIO));
 
-        format!(" C {} {} {} {} {} {}", cl.x, cl.y, cr.x, cr.y, cp.x, cp.y)
+        end.command_circuler(&cl, &cr)
     }
     for (i, po) in line.iter().enumerate() {
         // Start
         if i == 0 {
-            path_d.push_str(&format!("M {} {}", &po.x, &po.y));
+            path_d.push_str(&po.command_move());
             continue;
         }
         // Circuler
         if circul {
             // TODO: Fix frist circuler point
             if i < 2 {
-                path_d.push_str(&format!(" L {} {}", &po.x, &po.y))
+                path_d.push_str(&po.command_line())
             // path_d.push_str(&circul_command(&line[0], &line[0], &po, &line[i + 1]));
             } else if i > line.len() - 2 {
-                path_d.push_str(&circul_command(&line[i - 1], &line[i - 2], &po, &po));
+                path_d.push_str(&complement_circuler(&line[i - 2], &line[i - 1], &po, &po));
             } else {
-                path_d.push_str(&circul_command(
-                    &line[i - 1],
+                path_d.push_str(&complement_circuler(
                     &line[i - 2],
+                    &line[i - 1],
                     &po,
                     &line[i + 1],
                 ));
@@ -158,7 +201,7 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
         }
 
         // Polygon
-        path_d.push_str(&format!(" L {} {}", &po.x, &po.y))
+        path_d.push_str(&po.command_line())
     }
 
     if close {
