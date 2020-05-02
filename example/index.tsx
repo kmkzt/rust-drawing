@@ -14,10 +14,37 @@ const DrawArea = styled.div`
   height: 500;
   border: 1px solid #000;
 `
+
+const colorList = [
+  'none',
+  '#F44336',
+  '#E91E63',
+  '#9C27B0',
+  '#673AB7',
+  '#3F51B5',
+  '#2196F3',
+  '#00BCD4',
+  '#009688',
+  '#4CAF50',
+  '#8BC34A',
+  '#CDDC39',
+  '#FFEB3B',
+  '#FFC107',
+  '#FF9800',
+  '#FF5722',
+  '#795548',
+  '#ddd',
+  '#9E9E9E',
+  '#444',
+  'black',
+]
+
 const App = () => {
   const targetRef = useRef<any>()
   const [close, setClose] = useState(false)
   const [circuler, setCirculer] = useState(false)
+  const [fill, setFill] = useState('none')
+  const [stroke, setStroke] = useState('black')
   const [delay, setDelay] = useState(20)
   const [strokeWidth, setStrokeWidth] = useState(1)
   const [drawing, setDrawing] = useState<Drawing | null>(null)
@@ -47,20 +74,50 @@ const App = () => {
     },
     [drawing]
   )
-  const handleFillColor = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
+
+  const updateFill = useCallback(
+    (color: string) => {
       if (!drawing) return
-      drawing.fill = e.target.value
+      drawing.fill = color
+      setFill(color)
     },
     [drawing]
   )
 
-  const handleStrokeColor = useCallback(
+  const handleChangeFill = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
+      updateFill(e.target.value)
+    },
+    [updateFill]
+  )
+
+  const handleClickFill = useCallback(
+    (col: string) => () => {
+      updateFill(col)
+    },
+    [updateFill]
+  )
+
+  const updateStroke = useCallback(
+    (color: string) => {
       if (!drawing) return
-      drawing.stroke = e.target.value
+      drawing.stroke = color
+      setStroke(color)
     },
     [drawing]
+  )
+  const handleChangeStroke = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      updateStroke(e.target.value)
+    },
+    [updateStroke]
+  )
+
+  const handleClickStroke = useCallback(
+    (col: string) => () => {
+      updateStroke(col)
+    },
+    [updateStroke]
   )
 
   const handleStrokeWidth = useCallback(
@@ -110,16 +167,48 @@ const App = () => {
         <input
           type="text"
           placeholder="#000 or black or rgba(0,0,0,1)"
-          onChange={handleFillColor}
+          value={fill}
+          onChange={handleChangeFill}
         />
+      </div>
+      <div>
+        {colorList.map((col: string) => (
+          <div
+            key={col}
+            style={{
+              display: 'inline-block',
+              width: '15px',
+              height: '15px',
+              backgroundColor: col,
+              border: col === fill ? '2px solid #000' : '2px solid #999',
+            }}
+            onClick={handleClickFill(col)}
+          />
+        ))}
       </div>
       <div>
         STROKE:
         <input
           type="text"
           placeholder="#000 or black or rgba(0,0,0,1)"
-          onChange={handleStrokeColor}
+          value={stroke}
+          onChange={handleChangeStroke}
         />
+      </div>
+      <div>
+        {colorList.map((col: string) => (
+          <div
+            key={col}
+            style={{
+              display: 'inline-block',
+              width: '15px',
+              height: '15px',
+              backgroundColor: col,
+              border: col === stroke ? '2px solid #000' : '2px solid #999',
+            }}
+            onClick={handleClickStroke(col)}
+          />
+        ))}
       </div>
       <div>
         STROKE WIDTH: {String(strokeWidth)}
