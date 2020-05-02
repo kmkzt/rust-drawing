@@ -225,6 +225,9 @@ const App = () => {
       <button type="button" onClick={handleClear}>
         CLEAR
       </button>
+      <button type="button" onClick={drawing ? drawing.download : undefined}>
+        DOWNLOAD
+      </button>
     </>
   )
 }

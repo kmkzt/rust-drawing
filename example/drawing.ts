@@ -1,4 +1,5 @@
 import { throttle } from './throttle'
+import { downloadBlob } from './download'
 
 interface Point {
   x: number
@@ -54,6 +55,8 @@ export class Drawing {
     this.drawEnd = this.drawEnd.bind(this)
     this.startListener = this.startListener.bind(this)
 
+    this.toBase64 = this.toBase64.bind(this)
+    this.download = this.download.bind(this)
     // Load Drawing WASM Module
     if (!Drawing.Mod) {
       import('../pkg')
@@ -84,6 +87,14 @@ export class Drawing {
   public clear() {
     this.app.clear()
     this.render()
+  }
+
+  public toBase64(): string {
+    return `data:image/svg+xml;base64,${btoa(this.app.to_string())}`
+  }
+
+  public download(): void {
+    downloadBlob(this.toBase64(), 'svg')
   }
 
   private createPath(): any {
