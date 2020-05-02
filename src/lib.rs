@@ -19,8 +19,8 @@ struct Vector {
 impl Vector {
     pub fn point(&self) -> Point {
         Point {
-            x: self.angle.cos() * self.value,
-            y: self.angle.sin() * self.value,
+            x: (self.angle.cos() * self.value * 100.0).round() / 100.0,
+            y: (self.angle.sin() * self.value * 100.0).round() / 100.0,
         }
     }
 
@@ -106,10 +106,7 @@ fn test_vector() {
                 angle: 0.7853982
             }
             .point(),
-            Point {
-                x: 0.99999994,
-                y: 0.99999994
-            }
+            Point { x: 1.0, y: 1.0 }
         );
     }
     // scale
@@ -265,9 +262,7 @@ fn test_create_path() {
             true,
             true
         ),
-        // TODO: Fix
-        // "M 0 0 L 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
-        "M 0 0 L 1 1 C 1.4 1.2 1.5999999 1.1999999 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
+        "M 0 0 L 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
     );
 }
 
@@ -326,7 +321,7 @@ impl SvgPath {
         self.stroke_width
     }
 
-     #[wasm_bindgen(js_name=setStrokeWidth)]
+    #[wasm_bindgen(js_name=setStrokeWidth)]
     pub fn set_stroke_width(&mut self, stroke_width: f32) {
         self.stroke_width = stroke_width
     }
@@ -371,20 +366,28 @@ impl SvgPath {
         let mut path = "<path".to_string();
 
         // stroke
-        path.push_str(&format!(" stroke=\"{}\"", &self.stroke));
+        path.push_str(&format!(" stroke=\"{}\"", self.stroke));
 
         // stroke-width
         if self.stroke_width >= 0.0 {
-            path.push_str(&format!(" stroke-width=\"{}\"", &self.stroke_width));
+            path.push_str(&format!(" stroke-width=\"{}\"", self.stroke_width));
         }
 
         // fill
-        path.push_str(&format!(" fill=\"{}\"", &self.fill));
+        if self.fill == "" {
+            path.push_str(" fill=\"none\"");
+        } else {
+            path.push_str(&format!(" fill=\"{}\"", self.fill));
+        }
 
-        path.push_str(&format!(
-            " d=\"{}\"",
-            &self.data()
-        ));
+        // default attribute
+        if self.circul {
+            path.push_str(" stroke-linejoin=\"round\" stroke-linecap=\"round\"");
+        } else {
+            path.push_str(" stroke-linejoin=\"miter\" stroke-linecap=\"square\"");
+        }
+
+        path.push_str(&format!(" d=\"{}\"", self.data()));
 
         path.push_str(" />");
 
