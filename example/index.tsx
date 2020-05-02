@@ -19,6 +19,7 @@ const App = () => {
   const [close, setClose] = useState(false)
   const [circuler, setCirculer] = useState(false)
   const [delay, setDelay] = useState(20)
+  const [strokeWidth, setStrokeWidth] = useState(1)
   const [drawing, setDrawing] = useState<Drawing | null>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -62,6 +63,17 @@ const App = () => {
     [drawing]
   )
 
+  const handleStrokeWidth = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (!drawing) return
+      const num = Number(e.target.value)
+      if (Number.isNaN(num)) return
+      drawing.strokeWidth = num
+      setStrokeWidth(num)
+    },
+    [drawing]
+  )
+
   useEffect(() => {
     if (loaded) return
     if (!targetRef.current) return
@@ -71,19 +83,26 @@ const App = () => {
 
   return (
     <>
-      <DrawArea ref={targetRef} />
       <div>
         <div>
-          CLOSE PATH:
-          {close ? 'CLOSE' : 'NOT CLOSE'}
+          CLOSE:
+          <input type="checkbox" checked={close} onChange={toggleClose} />
         </div>
         <div>
-          CIRCULER PATH:
-          {circuler ? 'CIRCULER' : 'POLYGON'}
+          CIRCULER:
+          <input type="checkbox" checked={circuler} onChange={toggleCirculer} />
         </div>
         <div>
           THROTTLE:
           {String(delay)}
+          <input
+            type="range"
+            min="0"
+            max="300"
+            step="5"
+            value={delay}
+            onChange={handleChangeThrottle}
+          />
         </div>
       </div>
       <div>
@@ -102,22 +121,21 @@ const App = () => {
           onChange={handleStrokeColor}
         />
       </div>
+      <div>
+        STROKE WIDTH: {String(strokeWidth)}
+        <input
+          type="range"
+          min="1"
+          max="20"
+          step="1"
+          value={strokeWidth}
+          onChange={handleStrokeWidth}
+        />
+      </div>
+      <DrawArea ref={targetRef} />
       <button type="button" onClick={handleClear}>
         CLEAR
       </button>
-      <button type="button" onClick={toggleClose}>
-        TOGGLE CLOSE
-      </button>
-      <button type="button" onClick={toggleCirculer}>
-        TOGGLE CIRCULER
-      </button>
-      <input
-        type="range"
-        min="0"
-        max="300"
-        step="5"
-        onChange={handleChangeThrottle}
-      />
     </>
   )
 }
