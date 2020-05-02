@@ -131,6 +131,20 @@ const App = () => {
     [drawing]
   )
 
+  const handleDownload = useCallback(
+    (ext: 'png' | 'svg' | 'jpg') => () => {
+      if (!drawing) return
+
+      if (ext === 'svg') {
+        drawing.download()
+        return
+      }
+
+      drawing.downloadBlob(ext)
+    },
+    [drawing]
+  )
+
   useEffect(() => {
     if (loaded) return
     if (!targetRef.current) return
@@ -225,8 +239,14 @@ const App = () => {
       <button type="button" onClick={handleClear}>
         CLEAR
       </button>
-      <button type="button" onClick={drawing ? drawing.download : undefined}>
-        DOWNLOAD
+      <button type="button" onClick={handleDownload('svg')}>
+        DOWNLOAD SVG
+      </button>
+      <button type="button" onClick={handleDownload('png')}>
+        DOWNLOAD PNG
+      </button>
+      <button type="button" onClick={handleDownload('jpg')}>
+        DOWNLOAD JPEG
       </button>
     </>
   )

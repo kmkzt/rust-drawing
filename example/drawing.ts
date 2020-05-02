@@ -57,6 +57,7 @@ export class Drawing {
 
     this.toBase64 = this.toBase64.bind(this)
     this.download = this.download.bind(this)
+    this.downloadBlob = this.downloadBlob.bind(this)
     // Load Drawing WASM Module
     if (!Drawing.Mod) {
       import('../pkg')
@@ -95,6 +96,27 @@ export class Drawing {
 
   public download(): void {
     downloadBlob(this.toBase64(), 'svg')
+  }
+
+  public downloadBlob(ext: 'jpg' | 'png'): void {
+    const img: any = new Image()
+    const drawImage = () => {
+      const canvas = document.createElement('canvas')
+      const { width, height } = this.el.getBoundingClientRect()
+      canvas.setAttribute('width', String(width))
+      canvas.setAttribute('height', String(height))
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.fillStyle = '#fff'
+      ctx.drawImage(img, 0, 0)
+      if (ext === 'jpg') {
+        downloadBlob(canvas.toDataURL('image/jpeg'), 'jpg')
+      } else {
+        downloadBlob(canvas.toDataURL('image/png'), 'png')
+      }
+    }
+    img.addEventListener('load', drawImage, false)
+    img.src = this.toBase64()
   }
 
   private createPath(): any {
