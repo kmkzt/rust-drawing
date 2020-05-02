@@ -53,6 +53,7 @@ module.exports = {
     'react/no-deprecated': 'error',
     'react/display-name': [0],
     'react/prop-types': [0],
+    'react/jsx-one-expression-per-line': [0],
     'react/jsx-filename-extension': [1, { extensions: ['.jsx', '.tsx'] }],
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
