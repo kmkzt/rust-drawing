@@ -60,6 +60,11 @@ const App = () => {
     drawing.undo()
   }, [drawing])
 
+  const handleRedo = useCallback(() => {
+    if (!drawing) return
+    drawing.redo()
+  }, [drawing])
+
   const toggleClose = useCallback(() => {
     if (!drawing) return
     drawing.pathClose = !drawing.pathClose
@@ -246,6 +251,9 @@ const App = () => {
       </button>
       <button type="button" onClick={handleUndo}>
         UNDO
+      </button>
+      <button type="button" onClick={handleRedo}>
+        REDO
       </button>
       <button type="button" onClick={handleDownload('svg')}>
         DOWNLOAD SVG

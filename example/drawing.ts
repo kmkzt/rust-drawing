@@ -34,6 +34,8 @@ export class Drawing {
 
   private app: any
 
+  private redoList: any[] = []
+
   // Wasm instance
   private static Mod: any = null
 
@@ -91,8 +93,14 @@ export class Drawing {
   }
 
   public undo() {
-    const path = this.app.undo()
-    console.log(path)
+    this.redoList.push(this.app.undo())
+    this.render()
+  }
+
+  public redo() {
+    const path = this.redoList.pop()
+    if (!path) return
+    this.app.add(path)
     this.render()
   }
 
@@ -149,7 +157,7 @@ export class Drawing {
     this.wpath = this.createPath()
     this.wpath.add(Drawing.createPoint(x, y))
     this.app.add(this.wpath.copy())
-    this.el.innerHTML = this.app.to_string()
+    this.render()
     this.drawable = true
     console.log('START: x', x, 'y', y)
   }
