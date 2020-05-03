@@ -146,12 +146,21 @@ export class Drawing {
     return Drawing.Mod.Point.new(x, y)
   }
 
-  private handleMouse(cb: (arg: Point) => void) {
+  private handleMouse(cb: (po: Point) => void) {
     return (ev: MouseEvent): void => {
+      ev.preventDefault()
       const rect = this.el.getBoundingClientRect()
       cb({ x: ev.clientX - rect.left, y: ev.clientY - rect.top })
     }
   }
+
+  // private handleTouch(cb: (po: Point) => void) {
+  //   return (ev: TouchEvent): void => {
+  //     const touch = ev.changedTouches[0]
+  //     const rect = this.el.getBoundingClientRect()
+  //     cb({ x: touch.clientX - rect.left, y: touch.clientY - rect.top })
+  //   }
+  // }
 
   private drawStart({ x, y }: Point) {
     this.wpath = this.createPath()
@@ -171,6 +180,7 @@ export class Drawing {
   }
 
   private drawEnd({ x, y }: Point) {
+    if (!this.drawable) return
     this.drawable = false
     this.wpath.add(Drawing.createPoint(x, y))
     this.app.update(this.wpath)
@@ -181,21 +191,44 @@ export class Drawing {
   /**
    * TODO: add Pointer or Touch Listener
    */
-  private startListener() {
-    const handleMouseDown = this.handleMouse(this.drawStart)
-    const handleMouseMove = throttle(
-      this.handleMouse(this.drawMove),
-      this.delay
-    )
-    const handleMouseUp = this.handleMouse(this.drawEnd)
-    this.el.addEventListener('mousedown', handleMouseDown)
-    this.el.addEventListener('mousemove', handleMouseMove)
-    this.el.addEventListener('mouseup', handleMouseUp)
+  private startListener(): () => void {
+    // if (navigator.userAgent.includes('Mobile')) {
+    //   const stopListener = this.touchListener()
+    //   return () => stopListener()
+    // }
+    const stopListener = this.mouseListener()
+    return () => stopListener()
+  }
+
+  // private touchListener() {
+  //   const start = this.handleTouch(this.drawStart)
+  //   const move = throttle(this.handleTouch(this.drawMove), this.delay)
+  //   const end = this.handleTouch(this.drawEnd)
+  //   this.el.addEventListener('touchstart', start)
+  //   this.el.addEventListener('touchmove', move)
+  //   this.el.addEventListener('touchend', end)
+
+  //   return (): void => {
+  //     this.el.removeEventListener('touchstart', start)
+  //     this.el.removeEventListener('touchmove', move)
+  //     this.el.removeEventListener('touchend', end)
+  //   }
+  // }
+
+  private mouseListener() {
+    const start = this.handleMouse(this.drawStart)
+    const move = throttle(this.handleMouse(this.drawMove), this.delay)
+    const end = this.handleMouse(this.drawEnd)
+    this.el.addEventListener('mousedown', start)
+    this.el.addEventListener('mousemove', move)
+    this.el.addEventListener('mouseup', end)
+    this.el.addEventListener('mouseleave', end)
 
     return (): void => {
-      this.el.removeEventListener('mousedown', handleMouseDown)
-      this.el.removeEventListener('mousemove', handleMouseMove)
-      this.el.removeEventListener('mouseup', handleMouseUp)
+      this.el.removeEventListener('mousedown', start)
+      this.el.removeEventListener('mousemove', move)
+      this.el.removeEventListener('mouseup', end)
+      this.el.removeEventListener('mouseleave', end)
     }
   }
 
