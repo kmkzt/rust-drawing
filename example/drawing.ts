@@ -90,6 +90,12 @@ export class Drawing {
     this.render()
   }
 
+  public undo() {
+    const path = this.app.undo()
+    console.log(path)
+    this.render()
+  }
+
   public toBase64(): string {
     return `data:image/svg+xml;base64,${btoa(this.app.to_string())}`
   }

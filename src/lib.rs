@@ -438,6 +438,12 @@ impl SvgDrawing {
         self.paths.push(path);
     }
 
+    pub fn undo(&mut self) -> Option<SvgPath> {
+        let path = self.paths.pop();
+
+        path
+    }
+
     pub fn update(&mut self, path: SvgPath) {
         self.paths.pop();
         self.paths.push(path);
