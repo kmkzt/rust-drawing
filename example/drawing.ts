@@ -108,6 +108,7 @@ export class Drawing {
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, width, height)
       ctx.drawImage(img, 0, 0)
       if (ext === 'jpg') {
         downloadBlob(canvas.toDataURL('image/jpeg'), 'jpg')
