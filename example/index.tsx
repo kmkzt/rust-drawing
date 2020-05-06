@@ -9,9 +9,11 @@ import { render } from 'react-dom'
 import styled from 'styled-components'
 import { Drawing } from './drawing'
 
-const DrawArea = styled.div`
-  width: 500;
-  height: 500;
+const DrawArea: any = styled.div.attrs(
+  ({ size }: { size: number } = { size: 500 }) => ({
+    style: { width: size, height: size },
+  })
+)`
   border: 1px solid #000;
 `
 
@@ -39,6 +41,10 @@ const colorList = [
   'black',
 ]
 
+const getCanvasSize = () =>
+  window.innerHeight > window.innerWidth
+    ? window.innerWidth * 0.9
+    : window.innerHeight * 0.9
 const App = () => {
   const targetRef = useRef<any>()
   const [close, setClose] = useState(false)
@@ -50,6 +56,7 @@ const App = () => {
   const [drawing, setDrawing] = useState<Drawing | null>(null)
   const [loaded, setLoaded] = useState(false)
 
+  const [canvasSize, setCanvasSize] = useState(getCanvasSize())
   const handleClear = useCallback(() => {
     if (!drawing) return
     drawing.clear()
@@ -162,6 +169,11 @@ const App = () => {
     setDrawing(new Drawing(targetRef.current, {}))
   }, [loaded])
 
+  useEffect(() => {
+    const changeCanvasSize = () => setCanvasSize(getCanvasSize())
+    window.addEventListener('resize', changeCanvasSize)
+    return () => window.removeEventListener('resize', changeCanvasSize)
+  })
   return (
     <>
       <div>
@@ -245,7 +257,7 @@ const App = () => {
           onChange={handleStrokeWidth}
         />
       </div>
-      <DrawArea ref={targetRef} />
+      <DrawArea size={canvasSize} ref={targetRef} />
       <button type="button" onClick={handleClear}>
         CLEAR
       </button>
