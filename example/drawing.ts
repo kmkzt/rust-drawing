@@ -1,6 +1,17 @@
 import { throttle } from './throttle'
 import { downloadBlob } from './download'
 
+const getPassiveOption = (passive = true): boolean | { passive: boolean } => {
+  try {
+    const check = () => null
+    window.addEventListener('testPassive', check, { passive })
+    window.removeEventListener('testPassive', check)
+    return { passive }
+  } catch (e) {
+    return false
+  }
+}
+
 interface Point {
   x: number
   y: number
@@ -52,10 +63,13 @@ export class Drawing {
     // bind methods
     this.init = this.init.bind(this)
     this.handleMouse = this.handleMouse.bind(this)
+    this.handleTouch = this.handleTouch.bind(this)
     this.drawStart = this.drawStart.bind(this)
     this.drawMove = this.drawMove.bind(this)
     this.drawEnd = this.drawEnd.bind(this)
     this.startListener = this.startListener.bind(this)
+    this.touchListener = this.touchListener.bind(this)
+    this.mouseListener = this.mouseListener.bind(this)
 
     this.toBase64 = this.toBase64.bind(this)
     this.download = this.download.bind(this)
@@ -154,75 +168,81 @@ export class Drawing {
     }
   }
 
-  // private handleTouch(cb: (po: Point) => void) {
-  //   return (ev: TouchEvent): void => {
-  //     const touch = ev.changedTouches[0]
-  //     const rect = this.el.getBoundingClientRect()
-  //     cb({ x: touch.clientX - rect.left, y: touch.clientY - rect.top })
-  //   }
-  // }
+  private handleTouch(cb: (po: Point) => void) {
+    return (ev: TouchEvent): void => {
+      ev.preventDefault()
+      const touch = ev.changedTouches[0]
+      const rect = this.el.getBoundingClientRect()
+      cb({ x: touch.clientX - rect.left, y: touch.clientY - rect.top })
+    }
+  }
 
   private drawStart({ x, y }: Point) {
+    // console.log('START: x', x, 'y', y)
     this.wpath = this.createPath()
     this.wpath.add(Drawing.createPoint(x, y))
     this.app.add(this.wpath.copy())
     this.render()
     this.drawable = true
-    console.log('START: x', x, 'y', y)
   }
 
   private drawMove({ x, y }: Point) {
+    // console.log('MOVE: x', x, 'y', y)
     if (!this.drawable) return
     this.wpath.add(Drawing.createPoint(x, y))
     this.app.update(this.wpath.copy())
     this.render()
-    console.log('MOVE: x', x, 'y', y, this.wpath.isClose())
   }
 
   private drawEnd({ x, y }: Point) {
+    // console.log('END: x', x, 'y', y)
     if (!this.drawable) return
     this.drawable = false
     this.wpath.add(Drawing.createPoint(x, y))
     this.app.update(this.wpath)
     this.render()
-    console.log('END: x', x, 'y', y)
   }
 
-  /**
-   * TODO: add Pointer or Touch Listener
-   */
   private startListener(): () => void {
-    // if (navigator.userAgent.includes('Mobile')) {
-    //   const stopListener = this.touchListener()
-    //   return () => stopListener()
-    // }
+    if (navigator.userAgent.includes('Mobile')) {
+      const stopListener = this.touchListener()
+      return () => stopListener()
+    }
     const stopListener = this.mouseListener()
     return () => stopListener()
   }
 
-  // private touchListener() {
-  //   const start = this.handleTouch(this.drawStart)
-  //   const move = throttle(this.handleTouch(this.drawMove), this.delay)
-  //   const end = this.handleTouch(this.drawEnd)
-  //   this.el.addEventListener('touchstart', start)
-  //   this.el.addEventListener('touchmove', move)
-  //   this.el.addEventListener('touchend', end)
+  /**
+   * TODO: Second and subsequent listeners do not work
+   */
+  private touchListener() {
+    const start = this.handleTouch(this.drawStart)
+    const handleMove = this.handleTouch(this.drawMove)
+    const move = throttle(handleMove, this.delay)
+    const end = this.handleTouch(this.drawEnd)
+    const opt = getPassiveOption(false)
+    this.el.addEventListener('touchstart', start, opt)
+    this.el.addEventListener('touchmove', move, opt)
+    this.el.addEventListener('touchend', end, opt)
+    // this.el.addEventListener('touchcancel', end, opt)
 
-  //   return (): void => {
-  //     this.el.removeEventListener('touchstart', start)
-  //     this.el.removeEventListener('touchmove', move)
-  //     this.el.removeEventListener('touchend', end)
-  //   }
-  // }
+    return (): void => {
+      this.el.removeEventListener('touchstart', start)
+      this.el.removeEventListener('touchmove', move)
+      this.el.removeEventListener('touchend', end)
+      // this.el.removeEventListener('touchcancel', end)
+    }
+  }
 
   private mouseListener() {
     const start = this.handleMouse(this.drawStart)
     const move = throttle(this.handleMouse(this.drawMove), this.delay)
     const end = this.handleMouse(this.drawEnd)
-    this.el.addEventListener('mousedown', start)
-    this.el.addEventListener('mousemove', move)
-    this.el.addEventListener('mouseup', end)
-    this.el.addEventListener('mouseleave', end)
+    const opt = getPassiveOption(false)
+    this.el.addEventListener('mousedown', start, opt)
+    this.el.addEventListener('mousemove', move, opt)
+    this.el.addEventListener('mouseup', end, opt)
+    this.el.addEventListener('mouseleave', end, opt)
 
     return (): void => {
       this.el.removeEventListener('mousedown', start)
