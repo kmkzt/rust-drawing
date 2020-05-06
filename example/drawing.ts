@@ -88,9 +88,22 @@ export class Drawing {
   }
 
   public init() {
-    const { width, height } = this.el.getBoundingClientRect()
-    this.app = Drawing.Mod.SvgDrawing.new(width, height)
+    {
+      const { width, height } = this.el.getBoundingClientRect()
+      this.app = Drawing.Mod.SvgDrawing.new(width, height)
+    }
     this.stopListener = this.startListener()
+
+    if ((window as any).ResizeObserver) {
+      const resizeObserver: any = new (window as any).ResizeObserver(
+        (entries: any[]) => {
+          const { width, height }: any = entries[0].contentRect
+          this.app.changeSize(width, height)
+          this.render()
+        }
+      )
+      resizeObserver.observe(this.el)
+    }
   }
 
   public changeThrottle(ms: number) {

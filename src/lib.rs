@@ -358,6 +358,16 @@ impl SvgPath {
         self.clone()
     }
 
+
+    pub fn scale(&mut self, r: f32) {
+        let mut update = Vec::new();
+        for d in self.d.iter() {
+            update.push(d.scale(r));
+        }
+        self.d = update;
+        self.stroke_width = self.stroke_width * r;
+    }
+
     pub fn data(&self) -> String {
         create_path(self.d.to_vec(), self.close, self.circul)
     }
@@ -415,14 +425,14 @@ fn test_svgpath() {
 #[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq)]
 struct SvgDrawing {
-    width: u32,
-    height: u32,
+    width: f32,
+    height: f32,
     paths: Vec<SvgPath>,
 }
 
 #[wasm_bindgen]
 impl SvgDrawing {
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(width: f32, height: f32) -> Self {
         SvgDrawing {
             width,
             height,
@@ -449,21 +459,27 @@ impl SvgDrawing {
         self.paths.push(path);
     }
 
+    #[wasm_bindgen(js_name=getPath)]
+    pub fn get_path(&self, i: usize) -> SvgPath {
+        self.paths[i].clone()
+    }
+
+    #[wasm_bindgen(js_name=changeSize)]
+    pub fn change_size(&mut self, w: f32, h: f32) {
+        let prev_w = self.width;
+        self.height = h;
+        self.width = w;
+        for d in self.paths.iter_mut() {
+            d.scale(w / prev_w)
+        }
+    }
+
+
     pub fn to_string(&self) -> String {
         let mut path_el = "".to_string();
         for p in self.paths.iter() {
             path_el.push_str(&p.to_string());
         }
         format!("<svg width=\"{}\" height=\"{}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">{}</svg>",self.width, self.height, path_el)
-    }
-}
-
-impl Default for SvgDrawing {
-    fn default() -> Self {
-        SvgDrawing {
-            width: 640,
-            height: 480,
-            paths: Vec::new(),
-        }
     }
 }
