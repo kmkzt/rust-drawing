@@ -16,6 +16,13 @@ interface Point {
   x: number
   y: number
 }
+
+interface PathData {
+  fill: string
+  stroke: string
+  strokeWidth: number
+  data: Point[]
+}
 interface DrawingOption {
   pathClose?: boolean
   pathCirculer?: boolean
@@ -317,28 +324,36 @@ export class Drawing {
   }
 
   /**
+   * generate Wasm Instance Data
+   */
+  private getSvgData(): PathData[] {
+    const svgData: PathData[] = []
+    for (let i = 0; i < this.app.getPathLength(); i += 1) {
+      const path = this.app.getPath(i)
+      const data: Point[] = []
+      for (let u = 0; u < path.getPointLength(); u += 1) {
+        const point = path.getPoint(u)
+        data.push({
+          x: point.getX(),
+          y: point.getY(),
+        })
+      }
+      svgData.push({
+        data,
+        fill: path.getFill(),
+        stroke: path.getStroke(),
+        strokeWidth: path.getStrokeWidth(),
+      })
+    }
+    return svgData
+  }
+
+  /**
    * TODO: optimize render
    */
   private render() {
-    /**
-     * Wasm Instance Data
-     * TODO: add path attribute
-     */
     if (process.env.NODE_ENV === 'development') {
-      const svgData: any[] = []
-      for (let i = 0; i < this.app.getPathLength(); i += 1) {
-        const path = this.app.getPath(i)
-        const data: Point[] = []
-        for (let u = 0; u < path.getPointLength(); u += 1) {
-          const point = path.getPoint(u)
-          data.push({
-            x: point.getX(),
-            y: point.getY(),
-          })
-        }
-        svgData.push(data)
-      }
-      console.log(svgData)
+      console.log(this.getSvgData())
     }
     this.el.innerHTML = this.app.to_string()
   }
