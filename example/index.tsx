@@ -152,12 +152,7 @@ const App = () => {
     (ext: 'png' | 'svg' | 'jpg') => () => {
       if (!drawing) return
 
-      if (ext === 'svg') {
-        drawing.download()
-        return
-      }
-
-      drawing.downloadBlob(ext)
+      drawing.download(ext)
     },
     [drawing]
   )

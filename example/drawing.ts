@@ -67,9 +67,7 @@ export class Drawing {
     this.init = this.init.bind(this)
     this.startPencilMode = this.startPencilMode.bind(this)
     this.autoResizeElement = this.autoResizeElement.bind(this)
-    this.toBase64 = this.toBase64.bind(this)
     this.download = this.download.bind(this)
-    this.downloadBlob = this.downloadBlob.bind(this)
     // Load Drawing WASM Module
     if (!Drawing.Mod) {
       import('../pkg')
@@ -116,15 +114,13 @@ export class Drawing {
     this.render()
   }
 
-  public toBase64(): string {
-    return `data:image/svg+xml;base64,${btoa(this.app.to_string())}`
-  }
-
-  public download(): void {
-    downloadBlob(this.toBase64(), 'svg')
-  }
-
-  public downloadBlob(ext: 'jpg' | 'png'): void {
+  public download(ext: 'svg' | 'jpg' | 'png' = 'svg'): void {
+    const svgResource = `data:image/svg+xml;base64,${btoa(
+      this.app.to_string()
+    )}`
+    if (ext === 'svg') {
+      downloadBlob(svgResource, 'svg')
+    }
     const img: any = new Image()
     const drawImage = () => {
       const canvas = document.createElement('canvas')
@@ -143,7 +139,7 @@ export class Drawing {
       }
     }
     img.addEventListener('load', drawImage, false)
-    img.src = this.toBase64()
+    img.src = svgResource
   }
 
   private createPath(): any {
