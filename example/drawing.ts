@@ -22,6 +22,11 @@ interface DrawingOption {
   delay?: number
 }
 
+const enum DrawingMode {
+  Pencil,
+  Pen,
+}
+
 export class Drawing {
   public pathClose = false
 
@@ -37,15 +42,13 @@ export class Drawing {
 
   private el: HTMLElement
 
-  private drawable = false
-
-  private stopListener: any
-
-  private wpath: any
+  private stopPencilMode?: () => void
 
   private app: any
 
   private redoList: any[] = []
+
+  private mode: DrawingMode = DrawingMode.Pencil
 
   // Wasm instance
   private static Mod: any = null
@@ -62,15 +65,8 @@ export class Drawing {
 
     // bind methods
     this.init = this.init.bind(this)
-    this.handleMouse = this.handleMouse.bind(this)
-    this.handleTouch = this.handleTouch.bind(this)
-    this.drawStart = this.drawStart.bind(this)
-    this.drawMove = this.drawMove.bind(this)
-    this.drawEnd = this.drawEnd.bind(this)
-    this.startListener = this.startListener.bind(this)
-    this.touchListener = this.touchListener.bind(this)
-    this.mouseListener = this.mouseListener.bind(this)
-
+    this.startPencilMode = this.startPencilMode.bind(this)
+    this.autoResizeElement = this.autoResizeElement.bind(this)
     this.toBase64 = this.toBase64.bind(this)
     this.download = this.download.bind(this)
     this.downloadBlob = this.downloadBlob.bind(this)
@@ -88,30 +84,19 @@ export class Drawing {
   }
 
   public init() {
-    {
-      const { width, height } = this.el.getBoundingClientRect()
-      this.app = Drawing.Mod.SvgDrawing.new(width, height)
-    }
-    this.stopListener = this.startListener()
+    const { width, height } = this.el.getBoundingClientRect()
+    this.app = Drawing.Mod.SvgDrawing.new(width, height)
 
-    if ((window as any).ResizeObserver) {
-      const resizeObserver: any = new (window as any).ResizeObserver(
-        (entries: any[]) => {
-          const { width, height }: any = entries[0].contentRect
-          this.app.changeSize(width, height)
-          this.render()
-        }
-      )
-      resizeObserver.observe(this.el)
-    }
+    this.startPencilMode()
+    this.autoResizeElement()
   }
 
   public changeThrottle(ms: number) {
     this.delay = ms
-    if (this.stopListener) {
-      this.stopListener()
+    if (this.stopPencilMode) {
+      this.stopPencilMode()
     }
-    this.stopListener = this.startListener()
+    this.startPencilMode()
   }
 
   public clear() {
@@ -173,95 +158,106 @@ export class Drawing {
     return Drawing.Mod.Point.new(x, y)
   }
 
-  private handleMouse(cb: (po: Point) => void) {
-    return (ev: MouseEvent): void => {
-      ev.preventDefault()
-      const rect = this.el.getBoundingClientRect()
-      cb({ x: ev.clientX - rect.left, y: ev.clientY - rect.top })
+  private startPencilMode(): void {
+    let drawable = false
+    let wpath: any
+    const drawStart = ({ x, y }: Point) => {
+      // console.log('START: x', x, 'y', y)
+      wpath = this.createPath()
+      wpath.add(Drawing.createPoint(x, y))
+      this.app.add(wpath.copy())
+      this.render()
+      drawable = true
     }
-  }
 
-  private handleTouch(cb: (po: Point) => void) {
-    return (ev: TouchEvent): void => {
-      ev.preventDefault()
-      const touch = ev.changedTouches[0]
-      const rect = this.el.getBoundingClientRect()
-      cb({ x: touch.clientX - rect.left, y: touch.clientY - rect.top })
+    const drawMove = ({ x, y }: Point) => {
+      // console.log('MOVE: x', x, 'y', y)
+      if (!drawable) return
+      wpath.add(Drawing.createPoint(x, y))
+      this.app.update(wpath.copy())
+      this.render()
     }
-  }
 
-  private drawStart({ x, y }: Point) {
-    // console.log('START: x', x, 'y', y)
-    this.wpath = this.createPath()
-    this.wpath.add(Drawing.createPoint(x, y))
-    this.app.add(this.wpath.copy())
-    this.render()
-    this.drawable = true
-  }
+    const drawEnd = ({ x, y }: Point) => {
+      // console.log('END: x', x, 'y', y)
+      if (!drawable) return
+      drawable = false
+      wpath.add(Drawing.createPoint(x, y))
+      this.app.update(wpath)
+      this.render()
+    }
 
-  private drawMove({ x, y }: Point) {
-    // console.log('MOVE: x', x, 'y', y)
-    if (!this.drawable) return
-    this.wpath.add(Drawing.createPoint(x, y))
-    this.app.update(this.wpath.copy())
-    this.render()
-  }
-
-  private drawEnd({ x, y }: Point) {
-    // console.log('END: x', x, 'y', y)
-    if (!this.drawable) return
-    this.drawable = false
-    this.wpath.add(Drawing.createPoint(x, y))
-    this.app.update(this.wpath)
-    this.render()
-  }
-
-  private startListener(): () => void {
     if (navigator.userAgent.includes('Mobile')) {
-      const stopListener = this.touchListener()
-      return () => stopListener()
+      const handleTouch = (cb: (po: Point) => void) => (
+        ev: TouchEvent
+      ): void => {
+        ev.preventDefault()
+        const touch = ev.changedTouches[0]
+        const rect = this.el.getBoundingClientRect()
+        cb({ x: touch.clientX - rect.left, y: touch.clientY - rect.top })
+      }
+      const touchListener = () => {
+        const start = handleTouch(drawStart)
+        const handleMove = handleTouch(drawMove)
+        const move = throttle(handleMove, this.delay)
+        const end = handleTouch(drawEnd)
+        const opt = getPassiveOption(false)
+
+        this.el.addEventListener('touchstart', start, opt)
+        this.el.addEventListener('touchmove', move, opt)
+        this.el.addEventListener('touchend', end, opt)
+        // this.el.addEventListener('touchcancel', end, opt)
+
+        return (): void => {
+          this.el.removeEventListener('touchstart', start)
+          this.el.removeEventListener('touchmove', move)
+          this.el.removeEventListener('touchend', end)
+          // this.el.removeEventListener('touchcancel', end)
+        }
+      }
+      const stopPencilMode = touchListener()
+      this.stopPencilMode = () => stopPencilMode()
     }
-    const stopListener = this.mouseListener()
-    return () => stopListener()
+
+    const mouseListener = () => {
+      const handleMouse = (cb: (po: Point) => void) => (
+        ev: MouseEvent
+      ): void => {
+        ev.preventDefault()
+        const rect = this.el.getBoundingClientRect()
+        cb({ x: ev.clientX - rect.left, y: ev.clientY - rect.top })
+      }
+
+      const start = handleMouse(drawStart)
+      const move = throttle(handleMouse(drawMove), this.delay)
+      const end = handleMouse(drawEnd)
+      const opt = getPassiveOption(false)
+      this.el.addEventListener('mousedown', start, opt)
+      this.el.addEventListener('mousemove', move, opt)
+      this.el.addEventListener('mouseup', end, opt)
+      this.el.addEventListener('mouseleave', end, opt)
+
+      return (): void => {
+        this.el.removeEventListener('mousedown', start)
+        this.el.removeEventListener('mousemove', move)
+        this.el.removeEventListener('mouseup', end)
+        this.el.removeEventListener('mouseleave', end)
+      }
+    }
+    const stopPencilMode = mouseListener()
+    this.stopPencilMode = () => stopPencilMode()
   }
 
-  /**
-   * TODO: Second and subsequent listeners do not work
-   */
-  private touchListener() {
-    const start = this.handleTouch(this.drawStart)
-    const handleMove = this.handleTouch(this.drawMove)
-    const move = throttle(handleMove, this.delay)
-    const end = this.handleTouch(this.drawEnd)
-    const opt = getPassiveOption(false)
-    this.el.addEventListener('touchstart', start, opt)
-    this.el.addEventListener('touchmove', move, opt)
-    this.el.addEventListener('touchend', end, opt)
-    // this.el.addEventListener('touchcancel', end, opt)
-
-    return (): void => {
-      this.el.removeEventListener('touchstart', start)
-      this.el.removeEventListener('touchmove', move)
-      this.el.removeEventListener('touchend', end)
-      // this.el.removeEventListener('touchcancel', end)
-    }
-  }
-
-  private mouseListener() {
-    const start = this.handleMouse(this.drawStart)
-    const move = throttle(this.handleMouse(this.drawMove), this.delay)
-    const end = this.handleMouse(this.drawEnd)
-    const opt = getPassiveOption(false)
-    this.el.addEventListener('mousedown', start, opt)
-    this.el.addEventListener('mousemove', move, opt)
-    this.el.addEventListener('mouseup', end, opt)
-    this.el.addEventListener('mouseleave', end, opt)
-
-    return (): void => {
-      this.el.removeEventListener('mousedown', start)
-      this.el.removeEventListener('mousemove', move)
-      this.el.removeEventListener('mouseup', end)
-      this.el.removeEventListener('mouseleave', end)
+  private autoResizeElement() {
+    if ((window as any).ResizeObserver) {
+      const resizeObserver: any = new (window as any).ResizeObserver(
+        (entries: any[]) => {
+          const { width, height }: any = entries[0].contentRect
+          this.app.changeSize(width, height)
+          this.render()
+        }
+      )
+      resizeObserver.observe(this.el)
     }
   }
 
