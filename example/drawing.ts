@@ -217,8 +217,8 @@ export class Drawing {
           // this.el.removeEventListener('touchcancel', end)
         }
       }
-      const stopPencil = touchListener()
-      this.stopPencil = () => stopPencil()
+
+      this.stopPencil = touchListener()
     }
 
     const mouseListener = () => {
@@ -246,8 +246,7 @@ export class Drawing {
         this.el.removeEventListener('mouseleave', end)
       }
     }
-    const stopPencil = mouseListener()
-    this.stopPencil = () => stopPencil()
+    this.stopPencil = mouseListener()
   }
 
   private initResizeElement() {
