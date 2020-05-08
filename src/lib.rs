@@ -53,10 +53,12 @@ impl Point {
         }
     }
 
+    #[wasm_bindgen(js_name=getX)]
     pub fn get_x(&self) -> f32 {
         self.x
     }
 
+    #[wasm_bindgen(js_name=getY)]
     pub fn get_y(&self) -> f32 {
         self.y
     }
@@ -196,7 +198,10 @@ fn test_point() {
     }
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+// TODO: Fix frist circuler point
+// TODO: move SvgDrawing methods
+// TODO: Add SmoothRatio arguments
+// TODO: Editable control point
 fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
     const SMOOTH_RATIO: f32 = 0.2;
     let mut path_d = "".to_string();
@@ -214,10 +219,10 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
         }
         // Circuler
         if circul {
-            // TODO: Fix frist circuler point
             if i < 2 {
+                // TODO: fix
+                // path_d.push_str(&circul_command(&line[0], &line[0], &po, &line[i + 1]));
                 path_d.push_str(&po.command_line())
-            // path_d.push_str(&circul_command(&line[0], &line[0], &po, &line[i + 1]));
             } else if i > line.len() - 2 {
                 path_d.push_str(&complement_circuler(&line[i - 2], &line[i - 1], &po, &po));
             } else {

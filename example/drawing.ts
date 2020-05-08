@@ -24,11 +24,17 @@ interface DrawingOption {
   strokeWidth?: number
 }
 
+/**
+ * TODO: Add Edit Mode
+ */
 export const enum DrawingMode {
   Pencil,
   Pen,
 }
 
+/**
+ * TODO: add Wasm instance types
+ */
 export class Drawing {
   public pathClose = false
 
@@ -200,6 +206,9 @@ export class Drawing {
     this.stopPen = clickListener()
   }
 
+  /**
+   * TODO: optimize move listener.
+   */
   private initPencil(): void {
     let drawable = false
     let wpath: any | null = null
@@ -307,7 +316,30 @@ export class Drawing {
     }
   }
 
+  /**
+   * TODO: optimize render
+   */
   private render() {
+    /**
+     * Wasm Instance Data
+     * TODO: add path attribute
+     */
+    if (process.env.NODE_ENV === 'development') {
+      const svgData: any[] = []
+      for (let i = 0; i < this.app.getPathLength(); i += 1) {
+        const path = this.app.getPath(i)
+        const data: Point[] = []
+        for (let u = 0; u < path.getPointLength(); u += 1) {
+          const point = path.getPoint(u)
+          data.push({
+            x: point.getX(),
+            y: point.getY(),
+          })
+        }
+        svgData.push(data)
+      }
+      console.log(svgData)
+    }
     this.el.innerHTML = this.app.to_string()
   }
 }
