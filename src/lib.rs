@@ -53,6 +53,14 @@ impl Point {
         }
     }
 
+    pub fn get_x(&self) -> f32 {
+        self.x
+    }
+
+    pub fn get_y(&self) -> f32 {
+        self.y
+    }
+
     pub fn control(&self, v: &Vector) -> Self {
         v.point().add(*self)
     }
@@ -346,6 +354,21 @@ impl SvgPath {
         self.fill = fill.to_string();
     }
 
+    #[wasm_bindgen(js_name=getPointLength)]
+    pub fn get_point_length(&self) -> usize {
+        self.d.len()
+    }
+
+    #[wasm_bindgen(js_name=getPoint)]
+    pub fn get_point(&self, i: usize) -> Point {
+        self.d[i]
+    }
+
+    #[wasm_bindgen(js_name=updatePoint)]
+    pub fn update_point(&mut self, i: usize, p: Point) {
+        self.d[i] = p;
+    }
+
     pub fn clear(&mut self) {
         self.d = Vec::new();
     }
@@ -462,6 +485,16 @@ impl SvgDrawing {
     #[wasm_bindgen(js_name=getPath)]
     pub fn get_path(&self, i: usize) -> SvgPath {
         self.paths[i].clone()
+    }
+
+    #[wasm_bindgen(js_name=getPathLength)]
+    pub fn get_path_length(&self ) -> usize {
+        self.paths.len()
+    }
+
+    #[wasm_bindgen(js_name=updatePath)]
+    pub fn update_path(&mut self, i: usize, p: SvgPath )  {
+        self.paths[i] = p;
     }
 
     #[wasm_bindgen(js_name=changeSize)]
