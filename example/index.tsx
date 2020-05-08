@@ -88,8 +88,8 @@ const App = () => {
   const handleChangeMode = useCallback(
     (e: ChangeEvent<HTMLSelectElement>) => {
       if (!drawing) return
-      changeMode(e.target.value as any)
-      drawing.changeMode(e.target.value as any)
+      changeMode(Number(e.target.value) as any)
+      drawing.changeMode(Number(e.target.value) as any)
     },
     [drawing]
   )
@@ -185,7 +185,7 @@ const App = () => {
       <div>
         <div>
           MODE:
-          <select onChange={handleChangeMode}>
+          <select value={mode} onChange={handleChangeMode}>
             <option value={DrawingMode.Pencil}>Pencil</option>
             <option value={DrawingMode.Pen}>Pen</option>
           </select>
