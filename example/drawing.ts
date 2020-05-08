@@ -19,7 +19,9 @@ interface Point {
 interface DrawingOption {
   pathClose?: boolean
   pathCirculer?: boolean
-  delay?: number
+  fill?: string
+  stroke?: string
+  strokeWidth?: number
 }
 
 export const enum DrawingMode {
@@ -32,11 +34,11 @@ export class Drawing {
 
   public pathCirculer = false
 
-  public fill = 'none'
+  public fill: string
 
-  public stroke = 'black'
+  public stroke: string
 
-  public strokeWidth = 1.0
+  public strokeWidth: number
 
   public pencilThrottle: number
 
@@ -45,6 +47,8 @@ export class Drawing {
   private app?: any
 
   private stopPencil?: () => void
+
+  private stopPen?: () => void
 
   private redoList: any[] = []
 
@@ -55,13 +59,16 @@ export class Drawing {
 
   constructor(
     el: HTMLElement,
-    { pathClose, pathCirculer, delay }: DrawingOption
+    { pathClose, pathCirculer, fill, stroke, strokeWidth }: DrawingOption
   ) {
     // set parameter
     this.el = el
     this.pathClose = pathClose ?? false
-    this.pathCirculer = pathCirculer ?? false
-    this.pencilThrottle = delay ?? 20
+    this.pathCirculer = pathCirculer ?? true
+    this.fill = fill ?? 'none'
+    this.stroke = stroke ?? '#000'
+    this.strokeWidth = strokeWidth ?? 1
+    this.pencilThrottle = 20
 
     // Load Drawing WASM Module
     if (!Drawing.Mod) {
@@ -78,6 +85,7 @@ export class Drawing {
 
   public clear() {
     this.app.clear()
+    this.redoList = []
     this.render()
   }
 
@@ -152,17 +160,54 @@ export class Drawing {
     }
 
     this.initPencil()
+    this.initPen()
     this.initResizeElement()
   }
 
+  private initPen(): void {
+    let wpath: any | null = null
+    if (this.stopPen) {
+      this.stopPen()
+      this.stopPen = undefined
+    }
+    if (this.mode !== DrawingMode.Pen) return
+    const clickListener = () => {
+      const handleClick = (ev: MouseEvent): void => {
+        if (!this.el.contains(ev.target as any)) {
+          wpath = null
+          return
+        }
+        const { clientX, clientY } = ev
+        const { left, top } = this.el.getBoundingClientRect()
+        const x = clientX - left
+        const y = clientY - top
+        if (!wpath) {
+          wpath = this.createPath()
+          wpath.add(Drawing.createPoint(x, y))
+          this.app.add(wpath.copy())
+        } else {
+          wpath.add(Drawing.createPoint(x, y))
+          this.app.update(wpath.copy())
+        }
+        this.render()
+      }
+      window.addEventListener('click', handleClick)
+      return () => {
+        wpath = null
+        window.removeEventListener('click', handleClick)
+      }
+    }
+    this.stopPen = clickListener()
+  }
+
   private initPencil(): void {
+    let drawable = false
+    let wpath: any | null = null
     if (this.stopPencil) {
       this.stopPencil()
       this.stopPencil = undefined
     }
     if (this.mode !== DrawingMode.Pencil) return
-    let drawable = false
-    let wpath: any
     const drawStart = ({ x, y }: Point) => {
       // console.log('START: x', x, 'y', y)
       wpath = this.createPath()

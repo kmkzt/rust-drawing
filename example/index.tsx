@@ -49,7 +49,7 @@ const App = () => {
   const targetRef = useRef<any>()
   const [mode, changeMode] = useState(DrawingMode.Pencil)
   const [close, setClose] = useState(false)
-  const [circuler, setCirculer] = useState(false)
+  const [circuler, setCirculer] = useState(true)
   const [fill, setFill] = useState('none')
   const [stroke, setStroke] = useState('black')
   const [delay, setDelay] = useState(20)
@@ -75,15 +75,15 @@ const App = () => {
 
   const toggleClose = useCallback(() => {
     if (!drawing) return
-    drawing.pathClose = !drawing.pathClose
-    setClose(drawing.pathClose)
-  }, [drawing])
+    drawing.pathClose = !close
+    setClose(!close)
+  }, [drawing, close])
 
   const toggleCirculer = useCallback(() => {
     if (!drawing) return
-    drawing.pathCirculer = !drawing.pathCirculer
-    setCirculer(drawing.pathCirculer)
-  }, [drawing])
+    drawing.pathCirculer = !circuler
+    setCirculer(!circuler)
+  }, [drawing, circuler])
 
   const handleChangeMode = useCallback(
     (e: ChangeEvent<HTMLSelectElement>) => {
@@ -172,8 +172,16 @@ const App = () => {
     if (loaded) return
     if (!targetRef.current) return
     setLoaded(true)
-    setDrawing(new Drawing(targetRef.current, {}))
-  }, [loaded])
+    setDrawing(
+      new Drawing(targetRef.current, {
+        fill,
+        stroke,
+        strokeWidth,
+        pathClose: close,
+        pathCirculer: circuler,
+      })
+    )
+  }, [loaded, fill, stroke, strokeWidth, close, circuler])
 
   useEffect(() => {
     const changeCanvasSize = () => setCanvasSize(getCanvasSize())
