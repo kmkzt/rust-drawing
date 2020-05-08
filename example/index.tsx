@@ -7,7 +7,7 @@ import React, {
 } from 'react'
 import { render } from 'react-dom'
 import styled from 'styled-components'
-import { Drawing } from './drawing'
+import { Drawing, DrawingMode } from './drawing'
 
 const DrawArea: any = styled.div.attrs(
   ({ size }: { size: number } = { size: 500 }) => ({
@@ -47,6 +47,7 @@ const getCanvasSize = () =>
     : window.innerHeight * 0.9
 const App = () => {
   const targetRef = useRef<any>()
+  const [mode, changeMode] = useState(DrawingMode.Pencil)
   const [close, setClose] = useState(false)
   const [circuler, setCirculer] = useState(false)
   const [fill, setFill] = useState('none')
@@ -83,10 +84,20 @@ const App = () => {
     drawing.pathCirculer = !drawing.pathCirculer
     setCirculer(drawing.pathCirculer)
   }, [drawing])
+
+  const handleChangeMode = useCallback(
+    (e: ChangeEvent<HTMLSelectElement>) => {
+      if (!drawing) return
+      changeMode(e.target.value as any)
+      drawing.changeMode(e.target.value as any)
+    },
+    [drawing]
+  )
+
   const handleChangeThrottle = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       if (!drawing) return
-      drawing.changeThrottle(Number(e.target.value))
+      drawing.updatePencil(Number(e.target.value))
       setDelay(Number(e.target.value))
     },
     [drawing]
@@ -173,6 +184,13 @@ const App = () => {
     <>
       <div>
         <div>
+          MODE:
+          <select onChange={handleChangeMode}>
+            <option value={DrawingMode.Pencil}>Pencil</option>
+            <option value={DrawingMode.Pen}>Pen</option>
+          </select>
+        </div>
+        <div>
           CLOSE:
           <input type="checkbox" checked={close} onChange={toggleClose} />
         </div>
@@ -181,17 +199,45 @@ const App = () => {
           <input type="checkbox" checked={circuler} onChange={toggleCirculer} />
         </div>
         <div>
-          THROTTLE:
-          {String(delay)}
+          STROKE WIDTH:
+          <input
+            type="number"
+            min="1"
+            max="20"
+            step="1"
+            value={strokeWidth}
+            onChange={handleStrokeWidth}
+          />
           <input
             type="range"
-            min="0"
-            max="300"
-            step="5"
-            value={delay}
-            onChange={handleChangeThrottle}
+            min="1"
+            max="20"
+            step="1"
+            value={strokeWidth}
+            onChange={handleStrokeWidth}
           />
         </div>
+        {mode === DrawingMode.Pencil && (
+          <div>
+            PENCIL THROTTLE:
+            <input
+              type="number"
+              min="0"
+              max="300"
+              step="5"
+              value={delay}
+              onChange={handleChangeThrottle}
+            />
+            <input
+              type="range"
+              min="0"
+              max="300"
+              step="5"
+              value={delay}
+              onChange={handleChangeThrottle}
+            />
+          </div>
+        )}
       </div>
       <div>
         FILL:
@@ -240,17 +286,6 @@ const App = () => {
             onClick={handleClickStroke(col)}
           />
         ))}
-      </div>
-      <div>
-        STROKE WIDTH: {String(strokeWidth)}
-        <input
-          type="range"
-          min="1"
-          max="20"
-          step="1"
-          value={strokeWidth}
-          onChange={handleStrokeWidth}
-        />
       </div>
       <DrawArea size={canvasSize} ref={targetRef} />
       <button type="button" onClick={handleClear}>

@@ -22,7 +22,7 @@ interface DrawingOption {
   delay?: number
 }
 
-const enum DrawingMode {
+export const enum DrawingMode {
   Pencil,
   Pen,
 }
@@ -38,13 +38,13 @@ export class Drawing {
 
   public strokeWidth = 1.0
 
-  public delay: number
+  public pencilThrottle: number
 
   private el: HTMLElement
 
-  private stopPencilMode?: () => void
+  private app?: any
 
-  private app: any
+  private stopPencil?: () => void
 
   private redoList: any[] = []
 
@@ -61,13 +61,8 @@ export class Drawing {
     this.el = el
     this.pathClose = pathClose ?? false
     this.pathCirculer = pathCirculer ?? false
-    this.delay = delay ?? 20
+    this.pencilThrottle = delay ?? 20
 
-    // bind methods
-    this.init = this.init.bind(this)
-    this.startPencilMode = this.startPencilMode.bind(this)
-    this.autoResizeElement = this.autoResizeElement.bind(this)
-    this.download = this.download.bind(this)
     // Load Drawing WASM Module
     if (!Drawing.Mod) {
       import('../pkg')
@@ -79,22 +74,6 @@ export class Drawing {
     } else {
       this.init()
     }
-  }
-
-  public init() {
-    const { width, height } = this.el.getBoundingClientRect()
-    this.app = Drawing.Mod.SvgDrawing.new(width, height)
-
-    this.startPencilMode()
-    this.autoResizeElement()
-  }
-
-  public changeThrottle(ms: number) {
-    this.delay = ms
-    if (this.stopPencilMode) {
-      this.stopPencilMode()
-    }
-    this.startPencilMode()
   }
 
   public clear() {
@@ -154,7 +133,34 @@ export class Drawing {
     return Drawing.Mod.Point.new(x, y)
   }
 
-  private startPencilMode(): void {
+  public updatePencil(ms?: number): void {
+    if (ms) {
+      this.pencilThrottle = ms
+    }
+    this.initPencil()
+  }
+
+  public changeMode(mode: DrawingMode) {
+    this.mode = mode
+    this.init()
+  }
+
+  private init() {
+    if (!this.app) {
+      const { width, height } = this.el.getBoundingClientRect()
+      this.app = Drawing.Mod.SvgDrawing.new(width, height)
+    }
+
+    this.initPencil()
+    this.initResizeElement()
+  }
+
+  private initPencil(): void {
+    if (this.stopPencil) {
+      this.stopPencil()
+      this.stopPencil = undefined
+    }
+    if (this.mode !== DrawingMode.Pencil) return
     let drawable = false
     let wpath: any
     const drawStart = ({ x, y }: Point) => {
@@ -195,7 +201,7 @@ export class Drawing {
       const touchListener = () => {
         const start = handleTouch(drawStart)
         const handleMove = handleTouch(drawMove)
-        const move = throttle(handleMove, this.delay)
+        const move = throttle(handleMove, this.pencilThrottle)
         const end = handleTouch(drawEnd)
         const opt = getPassiveOption(false)
 
@@ -211,8 +217,8 @@ export class Drawing {
           // this.el.removeEventListener('touchcancel', end)
         }
       }
-      const stopPencilMode = touchListener()
-      this.stopPencilMode = () => stopPencilMode()
+      const stopPencil = touchListener()
+      this.stopPencil = () => stopPencil()
     }
 
     const mouseListener = () => {
@@ -225,7 +231,7 @@ export class Drawing {
       }
 
       const start = handleMouse(drawStart)
-      const move = throttle(handleMouse(drawMove), this.delay)
+      const move = throttle(handleMouse(drawMove), this.pencilThrottle)
       const end = handleMouse(drawEnd)
       const opt = getPassiveOption(false)
       this.el.addEventListener('mousedown', start, opt)
@@ -240,11 +246,11 @@ export class Drawing {
         this.el.removeEventListener('mouseleave', end)
       }
     }
-    const stopPencilMode = mouseListener()
-    this.stopPencilMode = () => stopPencilMode()
+    const stopPencil = mouseListener()
+    this.stopPencil = () => stopPencil()
   }
 
-  private autoResizeElement() {
+  private initResizeElement() {
     if ((window as any).ResizeObserver) {
       const resizeObserver: any = new (window as any).ResizeObserver(
         (entries: any[]) => {
