@@ -218,12 +218,10 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
             continue;
         }
         // Circuler
-        if circul {
-            if i < 2 {
-                // TODO: fix
-                // path_d.push_str(&circul_command(&line[0], &line[0], &po, &line[i + 1]));
-                path_d.push_str(&po.command_line())
-            } else if i > line.len() - 2 {
+        if circul && line.len() > 2 {
+            if i == 1 {
+                path_d.push_str(&complement_circuler(&line[0], &line[0], &po, &line[i + 1]));
+            } else if i == line.len() - 1 {
                 path_d.push_str(&complement_circuler(&line[i - 2], &line[i - 1], &po, &po));
             } else {
                 path_d.push_str(&complement_circuler(
@@ -275,7 +273,7 @@ fn test_create_path() {
             true,
             true
         ),
-        "M 0 0 L 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
+        "M 0 0 C 0.2 0.2 0.6 0.8 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
     );
 }
 
