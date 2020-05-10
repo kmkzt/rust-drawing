@@ -211,6 +211,8 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
 
         end.command_circuler(&cl, &cr)
     }
+    let is_circul = circul && line.len() > 2;
+    let end_index = line.len() - 1;
     for (i, po) in line.iter().enumerate() {
         // Start
         if i == 0 {
@@ -218,10 +220,10 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
             continue;
         }
         // Circuler
-        if circul && line.len() > 2 {
+        if is_circul {
             if i == 1 {
                 path_d.push_str(&complement_circuler(&line[0], &line[0], &po, &line[i + 1]));
-            } else if i == line.len() - 1 {
+            } else if i == end_index {
                 path_d.push_str(&complement_circuler(&line[i - 2], &line[i - 1], &po, &po));
             } else {
                 path_d.push_str(&complement_circuler(
@@ -239,6 +241,11 @@ fn create_path(line: Vec<Point>, close: bool, circul: bool) -> String {
     }
 
     if close {
+         if is_circul {
+            path_d.push_str(&complement_circuler(&line[end_index - 1], &line[end_index], &line[0], &line[1] ));
+        } else {
+            path_d.push_str(&line[0].command_line())
+        }
         path_d.push_str(" Z");
     }
 
@@ -255,10 +262,24 @@ fn test_create_path() {
                 Point { x: 1.0, y: 1.0 },
                 Point { x: -1.0, y: -1.0 }
             ],
+            false,
+            false
+        ),
+        "M 0 0 L 1 1 L -1 -1"
+    );
+
+    // Polygon Close
+    assert_eq!(
+        create_path(
+            vec![
+                Point { x: 0.0, y: 0.0 },
+                Point { x: 1.0, y: 1.0 },
+                Point { x: -1.0, y: -1.0 }
+            ],
             true,
             false
         ),
-        "M 0 0 L 1 1 L -1 -1 Z"
+        "M 0 0 L 1 1 L -1 -1 L 0 0 Z"
     );
 
     // Circuler
@@ -270,10 +291,25 @@ fn test_create_path() {
                 Point { x: 2.0, y: 1.0 },
                 Point { x: 3.0, y: 0.0 }
             ],
+            false,
+            true
+        ),
+        "M 0 0 C 0.2 0.2 0.6 0.8 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0"
+    );
+
+    // Circuler Close
+    assert_eq!(
+        create_path(
+            vec![
+                Point { x: 0.0, y: 0.0 },
+                Point { x: 1.0, y: 1.0 },
+                Point { x: 2.0, y: 1.0 },
+                Point { x: 3.0, y: 0.0 }
+            ],
             true,
             true
         ),
-        "M 0 0 C 0.2 0.2 0.6 0.8 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0 Z"
+        "M 0 0 C 0.2 0.2 0.6 0.8 1 1 C 1.4 1.2 1.6 1.2 2 1 C 2.4 0.8 2.8 0.2 3 0 C 2.6 -0.2 0.4 -0.2 0 0 Z"
     );
 }
 
