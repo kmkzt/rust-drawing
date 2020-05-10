@@ -230,7 +230,10 @@ export class Drawing {
       wpath.add(Drawing.createPoint(x, y))
       this.app.add(wpath.copy())
       this.render()
-      drawable = true
+      // TODO: Refactor drawStart throttle
+      setTimeout(() => {
+        drawable = true
+      }, this.pencilThrottle)
     }
 
     const drawMove = ({ x, y }: Point) => {
