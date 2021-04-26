@@ -1427,14 +1427,15 @@
     lodash.unescape "4.0.1"
     semver "^6.2.0"
 
-"@wasm-tool/wasm-pack-plugin@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@wasm-tool/wasm-pack-plugin/-/wasm-pack-plugin-1.2.0.tgz#18492fa57de773dda1ba5e8c6639d5f5a284b9e9"
-  integrity sha512-EOzBAeyh/gPFlcWYI5P/JWAMKadRVBSaC2Z0TmI71I11xee7akQebe158d5Ge/98uPYLOKpKmA+LaqnChcMD3g==
+"@wasm-tool/wasm-pack-plugin@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@wasm-tool/wasm-pack-plugin/-/wasm-pack-plugin-1.4.0.tgz#752e4a6d8fe35477a3c6cafd2ac6b0351f692848"
+  integrity sha512-zQh0gA7E73dgwhUM9sXX2rsaXsdWUIdK1kMlEhds3oi6ASn+ePxhb/quZweoeo0SjxuETVb0iu+/nxUZ5HxsUQ==
   dependencies:
     chalk "^2.4.1"
     command-exists "^1.2.7"
     watchpack "^1.6.0"
+    which "^2.0.2"
 
 "@webassemblyjs/ast@1.9.0":
   version "1.9.0"
